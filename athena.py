@@ -5702,6 +5702,137 @@ class AthenaSession:
         elif choice != "0":
             print("\033[33m   Invalid.\033[0m")
 
+    def _workflow_list(self):
+        """Print workflow list with keys and descriptions (no launch prompt)."""
+        print(f"\n{header_box('  WORKFLOWS  ', color='35')}\n")
+        for k, wf in WORKFLOWS.items():
+            print(f"   \033[97m[{k:>2}]\033[0m  {wf['name']}")
+            print(f"          \033[90m{wf['description']}\033[0m")
+        print()
+
+    def _workflow_add_wizard(self):
+        """Interactively add a new workflow to the session (session-only, not persisted)."""
+        print(f"\n{header_box('  ADD WORKFLOW  ', color='35')}\n")
+        try:
+            name = input("\033[97m   Name: \033[0m").strip()
+            if not name:
+                print("\033[33m   Cancelled.\033[0m")
+                return
+            desc = input("\033[97m   Description: \033[0m").strip()
+            print("\033[90m   Enter seed tasks as 'title | phase' (blank line to finish).\033[0m")
+            print("\033[90m   Phases: recon, web, network, ad, linux_post, windows_post,\033[0m")
+            print("\033[90m           credential, exfil, evasion, report\033[0m\n")
+            seed: List[Tuple[str, str]] = []
+            while True:
+                raw = input(f"\033[90m   task {len(seed) + 1}: \033[0m").strip()
+                if not raw:
+                    break
+                if "|" not in raw:
+                    print("\033[33m   Use format:  task title | phase\033[0m")
+                    continue
+                title_part, phase_part = raw.split("|", 1)
+                seed.append((title_part.strip(), phase_part.strip()))
+        except (EOFError, KeyboardInterrupt):
+            print("\n\033[33m   Cancelled.\033[0m")
+            return
+        if not seed:
+            print("\033[33m   No seed tasks — workflow not added.\033[0m")
+            return
+        # Assign the next available numeric key
+        existing_numeric = [int(k) for k in WORKFLOWS if k.isdigit()]
+        new_key = str(max(existing_numeric, default=0) + 1)
+        WORKFLOWS[new_key] = {"name": name, "description": desc, "seed": seed}
+        print(f"\n\033[32m   ✓  Workflow [{new_key}] '{name}' added for this session "
+              f"({len(seed)} tasks).\033[0m\n")
+
+    def _workflow_edit(self, key: str):
+        """Interactively edit the name/description of an existing workflow."""
+        if key not in WORKFLOWS:
+            print(f"\033[33m   No workflow with key '{key}'. "
+                  f"Use 'workflow list' to see valid keys.\033[0m")
+            return
+        wf = WORKFLOWS[key]
+        print(f"\n{header_box(f'  EDIT WORKFLOW [{key}]  ', color='35')}\n")
+        print(f"   Current name : \033[97m{wf['name']}\033[0m")
+        print(f"   Current desc : \033[90m{wf['description']}\033[0m\n")
+        try:
+            new_name = input(f"\033[97m   New name (blank = keep): \033[0m").strip()
+            new_desc = input(f"\033[97m   New desc (blank = keep): \033[0m").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n\033[33m   Cancelled.\033[0m")
+            return
+        if new_name:
+            WORKFLOWS[key]["name"] = new_name
+        if new_desc:
+            WORKFLOWS[key]["description"] = new_desc
+        print(f"\n\033[32m   ✓  Workflow [{key}] updated.\033[0m\n")
+
+    def _agent_edit(self, key: str):
+        """Interactively edit the persona or extra_rules of a specialist agent."""
+        if key not in AGENT_SPECS:
+            print(f"\033[33m   No agent with key '{key}'. "
+                  f"Valid keys: {', '.join(AGENT_SPECS.keys())}\033[0m")
+            return
+        spec = AGENT_SPECS[key]
+        agent_name = spec["name"]
+        print(f"\n{header_box(f'  EDIT AGENT: {agent_name}  ', color='35')}\n")
+        print(f"   \033[97mPersona (first 120 chars):\033[0m")
+        print(f"   \033[90m{spec['persona'][:120]}…\033[0m\n")
+        print(f"   \033[97mExtra rules (first 120 chars):\033[0m")
+        print(f"   \033[90m{spec.get('extra_rules', '')[:120]}…\033[0m\n")
+        print("\033[90m   Enter replacement text, or press Enter to keep current value.\033[0m\n")
+        try:
+            new_persona = input("\033[97m   New persona (blank = keep): \033[0m").strip()
+            new_rules   = input("\033[97m   New extra_rules (blank = keep): \033[0m").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\n\033[33m   Cancelled.\033[0m")
+            return
+        if new_persona:
+            AGENT_SPECS[key]["persona"] = new_persona
+        if new_rules:
+            AGENT_SPECS[key]["extra_rules"] = new_rules
+        print(f"\n\033[32m   ✓  Agent '{key}' updated for this session.\033[0m\n")
+
+    def _model_set(self, n_str: str):
+        """Force-set the active model to position n (1-indexed) in the provider chain."""
+        try:
+            n = int(n_str)
+        except ValueError:
+            print(f"\033[33m   Invalid number: '{n_str}'\033[0m")
+            return
+        if not 1 <= n <= len(PROVIDER_CHAIN):
+            print(f"\033[33m   Out of range. Choose 1–{len(PROVIDER_CHAIN)}.\033[0m")
+            return
+        self.provider_index = n - 1
+        model_id, model_name = PROVIDER_CHAIN[self.provider_index]
+        print(f"\n\033[32m   ✓  Active model set to [{n}] {model_name}\033[0m"
+              f"\033[90m  ({model_id})\033[0m\n")
+
+    def _prompt_show(self):
+        """Preview the system prompt that would be built for the next LLM call."""
+        node = self.ptt.find_in_progress() or self.ptt.find_next_pending()
+        agent_role = self._select_agent(node, "") if node else "recon"
+        prompt = build_system_prompt(
+            agent_role=agent_role,
+            target_info=self.target_info,
+            ptt=self.ptt,
+            active_node=node,
+            lhost=self.lhost,
+            workflow_key=self.current_workflow_key,
+            context_mgr=self.context_mgr,
+            graph=self.graph,
+            scope=self.scope,
+            turn_no=self._prompt_turn,
+        )
+        print(f"\n{header_box('  SYSTEM PROMPT PREVIEW  ', color='35')}\n")
+        print(f"\033[90m   Agent : {agent_role}   "
+              f"Turn : {self._prompt_turn}   "
+              f"Chars : {len(prompt)}\033[0m\n")
+        # Print with a line-length wrap for readability
+        for line in prompt.splitlines():
+            print(f"  \033[90m│\033[0m {line}")
+        print()
+
     # ── Findings / Tree display ──────────────────────────────────
 
     def show_findings(self):
@@ -6074,7 +6205,10 @@ class AthenaSession:
             f"\033[97m{len(TOOL_DISPATCH)}\033[0m structured\n"
             f"   Scope RoE  : \033[97m{'enabled' if self.scope.enabled else 'disabled'}\033[0m\n"
             f"   Graph      : \033[97m{'on' if HAS_NETWORKX else 'off (pip install networkx)'}\033[0m\n\n"
-            "   \033[97mworkflow\033[0m  open the workflow menu\n"
+            f"   \033[97mworkflow\033[0m  open the workflow menu\n"
+            "   \033[97mworkflow list\033[0m   show all workflows\n"
+            "   \033[97mworkflow add\033[0m    add a new workflow (session-only)\n"
+            "   \033[97mworkflow edit <key>\033[0m  edit workflow name/description\n"
             "   \033[97mtarget\033[0m    set or update target\n"
             "   \033[97mfindings\033[0m  show extracted findings (verified + unverified)\n"
             "   \033[97mtree\033[0m      show the Pentesting Task Tree\n"
@@ -6083,7 +6217,10 @@ class AthenaSession:
             "   \033[97mmitre\033[0m     show ATT&CK techniques used this session\n"
             "   \033[97mtools\033[0m     show tool availability + auto-install missing\n"
             "   \033[97mmodel\033[0m     show provider chain status\n"
+            "   \033[97mmodel set <n>\033[0m   force-set active model (1-indexed)\n"
             "   \033[97magent\033[0m     show all agent specialists\n"
+            "   \033[97magent edit <key>\033[0m  edit agent persona/rules (session-only)\n"
+            "   \033[97mprompt show\033[0m  preview next system prompt\n"
             "   \033[97msave\033[0m      save conversation to file\n"
             "   \033[97mreport\033[0m    generate report now\n"
             "   \033[97mclear\033[0m     clear AI memory (PTT preserved)\n"
@@ -6144,6 +6281,7 @@ class AthenaSession:
 
             self._log(f"[PRIEST] {user_input}")
             cmd = user_input.lower()
+            tokens = cmd.split()
 
             if cmd in ("exit", "quit", "q"):
                 print()
@@ -6154,8 +6292,19 @@ class AthenaSession:
                 break
             elif cmd == "help":
                 self.show_help()
-            elif cmd == "workflow":
-                self.show_workflow_menu()
+            elif tokens[0] == "workflow":
+                if len(tokens) == 1:
+                    self.show_workflow_menu()
+                elif tokens[1] == "list":
+                    self._workflow_list()
+                elif tokens[1] == "add":
+                    self._workflow_add_wizard()
+                elif tokens[1] == "edit" and len(tokens) >= 3:
+                    self._workflow_edit(tokens[2])
+                elif tokens[1] == "edit":
+                    print("\033[33m   Usage: workflow edit <key>\033[0m")
+                else:
+                    self.show_workflow_menu()
             elif cmd == "target":
                 self.set_target()
             elif cmd == "findings":
@@ -6164,10 +6313,26 @@ class AthenaSession:
                 self.show_tree()
             elif cmd == "tools":
                 self.show_tools_status()
-            elif cmd == "model":
-                self.show_model_status()
-            elif cmd == "agent" or cmd == "agents":
-                self.show_agents()
+            elif tokens[0] == "model":
+                if len(tokens) == 1 or tokens[1] == "list":
+                    self.show_model_status()
+                elif tokens[1] == "set" and len(tokens) >= 3:
+                    self._model_set(tokens[2])
+                elif tokens[1] == "set":
+                    print("\033[33m   Usage: model set <n>\033[0m")
+                else:
+                    self.show_model_status()
+            elif tokens[0] in ("agent", "agents"):
+                if len(tokens) == 1 or tokens[1] == "list":
+                    self.show_agents()
+                elif tokens[1] == "edit" and len(tokens) >= 3:
+                    self._agent_edit(tokens[2])
+                elif tokens[1] == "edit":
+                    print("\033[33m   Usage: agent edit <key>\033[0m")
+                else:
+                    self.show_agents()
+            elif tokens[0] == "prompt" and len(tokens) >= 2 and tokens[1] == "show":
+                self._prompt_show()
             elif cmd == "save":
                 self.save_session()
             elif cmd == "report":
