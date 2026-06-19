@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# dronecoil-gui — launches the DroneCoil GTK4 GUI.
+# Resolves the install dir then execs dronecoil_gui.py with system python.
+
+set -e
+
+for candidate in \
+    "${DRONECOIL_HOME:-}" \
+    "/opt/dronecoil" \
+    "$HOME/.local/share/dronecoil" \
+    "$HOME/Documents/dronecoil" \
+    "$HOME/dronecoil"
+do
+    if [[ -n "$candidate" && -f "$candidate/dronecoil_gui.py" ]]; then
+        export DRONECOIL_SCRIPT="$candidate/dronecoil.py"
+        exec /usr/bin/python3 "$candidate/dronecoil_gui.py" "$@"
+    fi
+done
+
+echo "dronecoil-gui: install dir not found. Reinstall with install.sh." >&2
+exit 1

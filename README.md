@@ -1,8 +1,8 @@
-# Athena — AI Offensive Security Agent
+# DroneCoil — AI Offensive Security Agent
 
 **v7.3** · Bare-metal Kali NetHunter · Commander: The Priest
 
-Athena is an AI-driven pentesting copilot. You give it a target and an
+DroneCoil is an AI-driven pentesting copilot. You give it a target and an
 objective, it picks the right specialist agent, picks the right tool,
 and runs commands one at a time through a `y/n` confirmation gate. Every
 finding is regex-extracted from real subprocess output (no AI
@@ -14,12 +14,12 @@ Task Tree (PTT) plus a networkx-backed attack graph.
 ## One-command install
 
 ```
-curl -fsSL https://raw.githubusercontent.com/the-priest/athena5/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/the-priest/dronecoil/main/bootstrap.sh | bash
 ```
 
-Clones the repo to `~/athena5`, runs `install.sh`, installs system packages
+Clones the repo to `~/dronecoil`, runs `install.sh`, installs system packages
 (GTK4 · libadwaita · VTE · python3-gi), pip deps (groq · networkx), drops a
-desktop entry and icon, and links both `athena` (CLI) and `athena-gui` into
+desktop entry and icon, and links both `dronecoil` (CLI) and `dronecoil-gui` into
 `/usr/local/bin`.
 
 Re-runnable: re-running pulls the latest commit and re-installs without
@@ -40,10 +40,10 @@ bash install.sh --gui-only  # skip CLI link
 ### Manual install
 
 ```
-git clone https://github.com/the-priest/athena5.git
+git clone https://github.com/the-priest/dronecoil.git
 ```
 ```
-cd athena5
+cd dronecoil
 ```
 ```
 bash install.sh
@@ -55,12 +55,12 @@ bash install.sh
 
 **GUI (Phosh / GNOME / anything libadwaita):**
 ```
-athena-gui
+dronecoil-gui
 ```
 
 **CLI (just the REPL):**
 ```
-athena
+dronecoil
 ```
 
 First launch prompts for your Groq API key (free — console.groq.com) and
@@ -85,7 +85,7 @@ The system prompt was sending ~2800 chars of tool registry + Kali arsenal
 - `MENTOR_PERSONA` trimmed: removed the verbose voice/slang examples block (~400
   chars). Teaching duty is intact.
 - `EXPANDED_HISTORY_SLICE` reduced from 8 → 6 turns. Stops the context blowup
-  when Athena gets stuck.
+  when DroneCoil gets stuck.
 - `CORE_RULES` tightened: removed 2 duplicate tool format examples.
 
 ### Bug fixes
@@ -119,17 +119,17 @@ native GTK4 / libadwaita GUI shell.
 ## Files installed
 
 ```
-/opt/athena5/
-  ├── athena.py            # the agent REPL
-  ├── athena_gui.py        # GTK4 shell
-  ├── athena-gui           # launcher script
+/opt/dronecoil/
+  ├── dronecoil.py            # the agent REPL
+  ├── dronecoil_gui.py        # GTK4 shell
+  ├── dronecoil-gui           # launcher script
   └── requirements.txt
-/usr/local/bin/athena      # → athena.py
-/usr/local/bin/athena-gui  # → athena-gui
-~/.local/share/applications/io.thepriest.Athena.desktop
-~/.local/share/icons/hicolor/scalable/apps/io.thepriest.Athena.svg
-~/.athena/logs/            # per-session logs + reports
-~/.athena/scope.json       # engagement scope (if set)
+/usr/local/bin/dronecoil      # → dronecoil.py
+/usr/local/bin/dronecoil-gui  # → dronecoil-gui
+~/.local/share/applications/io.thepriest.DroneCoil.desktop
+~/.local/share/icons/hicolor/scalable/apps/io.thepriest.DroneCoil.svg
+~/.dronecoil/logs/            # per-session logs + reports
+~/.dronecoil/scope.json       # engagement scope (if set)
 ```
 
 ---
@@ -156,7 +156,7 @@ native GTK4 / libadwaita GUI shell.
 | `help`     | Help menu |
 | `exit` / `q` | End session and generate report |
 
-Or just type any objective in plain English — Athena routes to the right specialist.
+Or just type any objective in plain English — DroneCoil routes to the right specialist.
 
 ---
 
@@ -185,7 +185,7 @@ Requires Python ≥ 3.10. GUI needs `python3-gi`, `gir1.2-gtk-4.0`,
 
 ## Safety
 
-Athena refuses: `apt upgrade` variants, destructive commands (`rm -rf /`,
+DroneCoil refuses: `apt upgrade` variants, destructive commands (`rm -rf /`,
 `dd if=`, `mkfs`, fork bombs, shutdown), interactive shells without proper
 flags, out-of-scope targets when scope is enabled. Every other command goes
 through the `y/n/q` gate. System-modifying commands get a second confirmation.

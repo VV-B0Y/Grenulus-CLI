@@ -1,6 +1,6 @@
-# Athena Developer Documentation
+# DroneCoil Developer Documentation
 
-> **Welcome, new dev.** This folder is your starting point for understanding, running, and extending the Athena AI pentesting agent.
+> **Welcome, new dev.** This folder is your starting point for understanding, running, and extending the DroneCoil AI pentesting agent.
 
 ---
 
@@ -14,7 +14,7 @@
 | Add a new specialist agent | [CUSTOMIZATION.md §1](CUSTOMIZATION.md#1-adding-a-new-specialist-agent) |
 | Add a new workflow | [CUSTOMIZATION.md §2](CUSTOMIZATION.md#2-adding-a-new-workflow) |
 | Add a new tool | [CUSTOMIZATION.md §3](CUSTOMIZATION.md#3-adding-a-new-tool) |
-| Change Athena's tone / prompts | [CUSTOMIZATION.md §4](CUSTOMIZATION.md#4-customizing-agent-prompts) |
+| Change DroneCoil's tone / prompts | [CUSTOMIZATION.md §4](CUSTOMIZATION.md#4-customizing-agent-prompts) |
 | Add a knowledge base section | [CUSTOMIZATION.md §5](CUSTOMIZATION.md#5-adding-knowledge-base-sections) |
 | Add a new LLM model | [CUSTOMIZATION.md §6](CUSTOMIZATION.md#6-adding-a-new-llm-provider--model) |
 | See all agents, tools, commands at a glance | [REFERENCE.md](REFERENCE.md) |
@@ -32,7 +32,7 @@
 ## 60-Second Orientation
 
 ```
-athena.py (6 275 lines) — the entire CLI engine, one file
+dronecoil.py (6 275 lines) — the entire CLI engine, one file
 │
 ├── PROVIDER_CHAIN       # Groq model fallback list (cheapest → most capable)
 ├── AGENT_SPECS          # 11 specialist agents (persona + rules per agent)
@@ -41,20 +41,20 @@ athena.py (6 275 lines) — the entire CLI engine, one file
 ├── KB                   # Numbered tactical knowledge base sections
 ├── FINDING_PATTERNS     # Regex patterns run on raw subprocess output
 ├── CORE_RULES           # LLM output format definition ([THOUGHT][CMD][CONF]…)
-├── MENTOR_PERSONA       # Athena's global voice + teaching rules
+├── MENTOR_PERSONA       # DroneCoil's global voice + teaching rules
 │
 ├── class PTT            # Pentesting Task Tree — tracks all tasks + findings
 ├── class ContextManager # Decides how much context to send each turn
-├── class ScopeConfig    # Scope / RoE enforcement from ~/.athena/scope.json
+├── class ScopeConfig    # Scope / RoE enforcement from ~/.dronecoil/scope.json
 ├── class AttackGraph    # networkx DiGraph of hosts/services/creds
 ├── class ToolBuilder    # 28 static methods → shell strings
 │
-└── class AthenaSession  # Main runtime: owns all state + runs _agent_loop()
+└── class DroneCoilSession  # Main runtime: owns all state + runs _agent_loop()
     ├── think_turn()     # Single LLM turn (select agent → build prompt → call API → parse)
     ├── _agent_loop()    # Main while-loop (calls think_turn, handles y/n/q, updates PTT)
     └── run_command()    # subprocess execution with timeout + sudo retry
 
-athena_gui.py (1 566 lines) — GTK4 shell, spawns athena.py as subprocess
+dronecoil_gui.py (1 566 lines) — GTK4 shell, spawns dronecoil.py as subprocess
 ```
 
 ---
@@ -69,8 +69,8 @@ pip install groq networkx
 export GROQ_API_KEY='gsk_...'
 
 # Run CLI directly (no install.sh needed)
-python3 athena.py
+python3 dronecoil.py
 
 # Run GUI (needs GTK4 + libadwaita)
-python3 athena_gui.py
+python3 dronecoil_gui.py
 ```

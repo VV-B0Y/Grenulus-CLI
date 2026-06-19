@@ -1,4 +1,4 @@
-# Athena Developer Guide
+# DroneCoil Developer Guide
 
 > **Version:** 7.3 · **Target Platform:** Kali NetHunter / Kali Linux / Debian
 > **For:** New developers taking over or contributing to the project.
@@ -7,12 +7,12 @@
 
 ## Table of Contents
 
-1. [What Is Athena?](#1-what-is-athena)
+1. [What Is DroneCoil?](#1-what-is-dronecoil)
 2. [Repository Layout](#2-repository-layout)
 3. [Top-Down Architecture](#3-top-down-architecture)
 4. [Core Data Models](#4-core-data-models)
 5. [Component Deep-Dives](#5-component-deep-dives)
-   - 5.1 [AthenaSession — The Brain](#51-athenasession--the-brain)
+   - 5.1 [DroneCoilSession — The Brain](#51-dronecoilsession--the-brain)
    - 5.2 [Pentesting Task Tree (PTT)](#52-pentesting-task-tree-ptt)
    - 5.3 [Agent System](#53-agent-system)
    - 5.4 [Workflow System](#54-workflow-system)
@@ -25,15 +25,15 @@
    - 5.11 [Finding Extraction](#511-finding-extraction)
    - 5.12 [Groq Provider Chain](#512-groq-provider-chain)
 6. [Turn Execution Flow](#6-turn-execution-flow)
-7. [GUI Architecture (athena_gui.py)](#7-gui-architecture-athena_guipy)
+7. [GUI Architecture (dronecoil_gui.py)](#7-gui-architecture-dronecoil_guipy)
 8. [Install & Runtime Paths](#8-install--runtime-paths)
 9. [Key Constants Cheat-Sheet](#9-key-constants-cheat-sheet)
 
 ---
 
-## 1. What Is Athena?
+## 1. What Is DroneCoil?
 
-Athena is an **AI-driven offensive security agent** that wraps a Groq-hosted LLM (free tier) around a structured pentesting engine. The operator provides a target and an objective; Athena:
+DroneCoil is an **AI-driven offensive security agent** that wraps a Groq-hosted LLM (free tier) around a structured pentesting engine. The operator provides a target and an objective; DroneCoil:
 
 1. Seeds a **Pentesting Task Tree (PTT)** — a hierarchical to-do list for the engagement.
 2. For each tree node, selects a matching **specialist agent** (recon, web, AD, etc.).
@@ -43,22 +43,22 @@ Athena is an **AI-driven offensive security agent** that wraps a Groq-hosted LLM
 6. Extracts **findings** from real subprocess output (never from the AI's prose).
 7. Updates the PTT, attack graph, and loops until done.
 
-Everything is orchestrated inside `athena.py`. The GUI (`athena_gui.py`) is a GTK4 shell that spawns `athena.py` as a child process and parses its output into visual cards.
+Everything is orchestrated inside `dronecoil.py`. The GUI (`dronecoil_gui.py`) is a GTK4 shell that spawns `dronecoil.py` as a child process and parses its output into visual cards.
 
 ---
 
 ## 2. Repository Layout
 
 ```
-Grenulus-CLI/
-├── athena.py          # 6 275 lines — the entire CLI engine
-├── athena_gui.py      # 1 566 lines — GTK4 / libadwaita GUI shell
-├── athena-gui         # Bash launcher script for the GUI
+DroneCoil/
+├── dronecoil.py          # 6 275 lines — the entire CLI engine
+├── dronecoil_gui.py      # 1 566 lines — GTK4 / libadwaita GUI shell
+├── dronecoil-gui         # Bash launcher script for the GUI
 ├── bootstrap.sh       # One-shot remote installer (curl | bash)
 ├── install.sh         # Local install script (symlinks, deps, desktop entry)
 ├── requirements.txt   # Python deps: groq>=0.4.0, networkx>=3.0
-├── io.thepriest.Athena.desktop  # XDG desktop entry
-├── io.thepriest.Athena.svg      # Application icon
+├── io.thepriest.DroneCoil.desktop  # XDG desktop entry
+├── io.thepriest.DroneCoil.svg      # Application icon
 ├── docs/              # ← YOU ARE HERE
 │   ├── DEVELOPER_GUIDE.md
 │   ├── CUSTOMIZATION.md
@@ -66,7 +66,7 @@ Grenulus-CLI/
 └── README.md
 ```
 
-`athena.py` is **intentionally monolithic** — all configuration lives as top-level constants so operators can fork, diff, and patch without a build system.
+`dronecoil.py` is **intentionally monolithic** — all configuration lives as top-level constants so operators can fork, diff, and patch without a build system.
 
 ---
 
@@ -76,16 +76,16 @@ Grenulus-CLI/
 graph TD
     Operator["👤 Operator<br/>(CLI or GUI)"]
     
-    subgraph GUI["athena_gui.py — GTK4 Shell"]
-        AthenaProcess["AthenaProcess<br/>spawns athena.py as subprocess"]
+    subgraph GUI["dronecoil_gui.py — GTK4 Shell"]
+        DroneCoilProcess["DroneCoilProcess<br/>spawns dronecoil.py as subprocess"]
         PanelParser["PanelParser<br/>parses ANSI output → card events"]
         ConversationView["ConversationView<br/>renders cards in scroll view"]
         InputBar["InputBar<br/>y/n/q / free text"]
     end
 
-    subgraph Engine["athena.py — Engine"]
+    subgraph Engine["dronecoil.py — Engine"]
         REPL["REPL / show_workflow_menu()<br/>main() entry point"]
-        Session["AthenaSession<br/>all stateful runtime data"]
+        Session["DroneCoilSession<br/>all stateful runtime data"]
         
         subgraph Turn["Per-Turn Loop (_agent_loop)"]
             SelectAgent["_select_agent()<br/>PTT node → agent role"]
@@ -100,7 +100,7 @@ graph TD
         end
     end
 
-    subgraph State["Persistent State (~/.athena/)"]
+    subgraph State["Persistent State (~/.dronecoil/)"]
         PTT["PTT<br/>(Pentesting Task Tree)"]
         Findings["Findings<br/>(tagged + source-stamped)"]
         AttackGraph["AttackGraph<br/>(networkx DiGraph)"]
@@ -117,10 +117,10 @@ graph TD
     Session --> Turn
     Turn --> LLM
     Turn --> State
-    AthenaProcess -->|"stdin/stdout pipe"| Session
+    DroneCoilProcess -->|"stdin/stdout pipe"| Session
     PanelParser --> ConversationView
     Operator -->|"GTK4 UI"| InputBar
-    InputBar --> AthenaProcess
+    InputBar --> DroneCoilProcess
 ```
 
 ---
@@ -129,7 +129,7 @@ graph TD
 
 ```mermaid
 classDiagram
-    class AthenaSession {
+    class DroneCoilSession {
         +target_info: Dict
         +lhost: str
         +history: List~Dict~
@@ -217,10 +217,10 @@ classDiagram
         +add_hash(value, htype, user)
     }
 
-    AthenaSession "1" --> "1" PTT
-    AthenaSession "1" --> "1" ContextManager
-    AthenaSession "1" --> "1" ScopeConfig
-    AthenaSession "1" --> "1" AttackGraph
+    DroneCoilSession "1" --> "1" PTT
+    DroneCoilSession "1" --> "1" ContextManager
+    DroneCoilSession "1" --> "1" ScopeConfig
+    DroneCoilSession "1" --> "1" AttackGraph
     PTT "1" --> "*" PTTNode
     PTT "1" --> "*" Finding
     PTTNode "1" --> "*" PTTNode : children
@@ -230,16 +230,16 @@ classDiagram
 
 ## 5. Component Deep-Dives
 
-### 5.1 AthenaSession — The Brain
+### 5.1 DroneCoilSession — The Brain
 
-**File:** `athena.py` · **Line:** ~4194
+**File:** `dronecoil.py` · **Line:** ~4194
 
-`AthenaSession` is the single runtime object that owns all engagement state. It is instantiated once in `main()` and lives for the session.
+`DroneCoilSession` is the single runtime object that owns all engagement state. It is instantiated once in `main()` and lives for the session.
 
 ```
 __init__()
   ├── _init_provider()        → validate GROQ_API_KEY, create Groq client
-  ├── _start_log()            → open ~/.athena/logs/session_YYYYMMDD_HHMMSS.txt
+  ├── _start_log()            → open ~/.dronecoil/logs/session_YYYYMMDD_HHMMSS.txt
   ├── _run_boot_check()       → verify Kali tools availability (cached 6h)
   ├── get_lhost()             → detect attacker IP (hostname -I, /proc/net/route)
   └── ensure_rockyou()        → gunzip /usr/share/wordlists/rockyou.txt.gz if needed
@@ -263,7 +263,7 @@ __init__()
 
 ### 5.2 Pentesting Task Tree (PTT)
 
-**File:** `athena.py` · **Line:** ~1388
+**File:** `dronecoil.py` · **Line:** ~1388
 
 The PTT is a **rooted tree** of `PTTNode` objects representing every task in the engagement. It replaces the flat findings dict from v6.x.
 
@@ -289,10 +289,10 @@ The tree is serialised to natural language via `to_natural_language()` and injec
 
 ### 5.3 Agent System
 
-**File:** `athena.py` · **Line:** ~1133  
+**File:** `dronecoil.py` · **Line:** ~1133  
 **Dict:** `AGENT_SPECS`
 
-Athena has **11 specialist agents**. Each is a named system-prompt fragment, not a separate API call. The dispatcher is deterministic — zero extra tokens spent on routing.
+DroneCoil has **11 specialist agents**. Each is a named system-prompt fragment, not a separate API call. The dispatcher is deterministic — zero extra tokens spent on routing.
 
 ```mermaid
 graph TD
@@ -341,7 +341,7 @@ graph TD
 
 ### 5.4 Workflow System
 
-**File:** `athena.py` · **Line:** ~3550  
+**File:** `dronecoil.py` · **Line:** ~3550  
 **Dict:** `WORKFLOWS`
 
 Workflows are **PTT seeders** — they pre-populate the task tree with a known engagement path. There are **23 built-in workflows**.
@@ -381,7 +381,7 @@ Each `seed` entry is a `(title, phase)` tuple. `_seed_ptt_from_workflow()` conve
 
 ### 5.5 Tool Dispatch Layer
 
-**File:** `athena.py` · **Line:** ~2464  
+**File:** `dronecoil.py` · **Line:** ~2464  
 **Classes/Dicts:** `ToolBuilder`, `TOOL_DISPATCH`, `TOOL_BINARY`, `KWARG_SYNONYMS`
 
 The tool layer has three parts:
@@ -447,7 +447,7 @@ TOOL_DISPATCH = {
 
 ### 5.6 Knowledge Base (KB)
 
-**File:** `athena.py` · **Line:** ~720  
+**File:** `dronecoil.py` · **Line:** ~720  
 **Dict:** `KB`
 
 The KB is a numbered dict of tactical reference sections. Each entry is a multi-line string containing command cheat-sheet material for a specific attack phase.
@@ -468,13 +468,13 @@ The KB is a numbered dict of tactical reference sections. Each entry is a multi-
 
 ### 5.7 Prompt Construction Pipeline
 
-**File:** `athena.py` · **Function:** `build_system_prompt()` (~line 3920)
+**File:** `dronecoil.py` · **Function:** `build_system_prompt()` (~line 3920)
 
 Every LLM call produces a system prompt assembled from these layers, in order:
 
 ```mermaid
 graph TD
-    A["1. MENTOR_PERSONA<br/>Athena's voice + teaching duty"] --> P
+    A["1. MENTOR_PERSONA<br/>DroneCoil's voice + teaching duty"] --> P
     B["2. Agent persona<br/>AGENT_SPECS[role]['persona']"] --> P
     C["3. Agent extra_rules<br/>AGENT_SPECS[role]['extra_rules']"] --> P
     D["4. CORE_RULES<br/>output format, tag syntax, safety rules"] --> P
@@ -496,7 +496,7 @@ After the system prompt, history is appended as `[{role: user/assistant, content
 
 ### 5.8 Context Manager
 
-**File:** `athena.py` · **Class:** `ContextManager` (~line 3499)
+**File:** `dronecoil.py` · **Class:** `ContextManager` (~line 3499)
 
 `ContextManager` is a lightweight stateful advisor that decides what context to send each turn without the LLM needing to ask:
 
@@ -511,8 +511,8 @@ After the system prompt, history is appended as `[{role: user/assistant, content
 
 ### 5.9 Scope / RoE Enforcement
 
-**File:** `athena.py` · **Class:** `ScopeConfig` (~line 3108)  
-**Config file:** `~/.athena/scope.json`
+**File:** `dronecoil.py` · **Class:** `ScopeConfig` (~line 3108)  
+**Config file:** `~/.dronecoil/scope.json`
 
 Before any command hits subprocess, `ScopeConfig.check(cmd, target_hint)` validates it against:
 - **Allowed CIDRs** — if scope is enabled, the target IP must match at least one.
@@ -526,7 +526,7 @@ Out-of-scope commands print a warning and skip execution. The operator is shown 
 
 ### 5.10 Attack Graph
 
-**File:** `athena.py` · **Class:** `AttackGraph` (~line 3279)
+**File:** `dronecoil.py` · **Class:** `AttackGraph` (~line 3279)
 
 The attack graph is a `networkx.DiGraph` tracking relationships between discovered hosts, services, credentials, and hashes. It provides **pivot suggestions** — nodes that are reachable from current credentials.
 
@@ -536,7 +536,7 @@ Nodes are typed: `host`, `service`, `cred`, `hash`. Edges represent "leads to" o
 
 ### 5.11 Finding Extraction
 
-**File:** `athena.py` · **Function:** `extract_findings_from_stdout()` (~line 1718)  
+**File:** `dronecoil.py` · **Function:** `extract_findings_from_stdout()` (~line 1718)  
 **Dict:** `FINDING_PATTERNS`
 
 Findings are extracted **only from raw subprocess stdout**, never from the LLM's prose. This prevents the AI from hallucinating findings.
@@ -568,9 +568,9 @@ Each extracted finding is stamped with its source command, the PTT node that pro
 
 ### 5.12 Groq Provider Chain
 
-**File:** `athena.py` · **Constant:** `PROVIDER_CHAIN` (~line 56)
+**File:** `dronecoil.py` · **Constant:** `PROVIDER_CHAIN` (~line 56)
 
-Athena uses a fallback chain of Groq-hosted models, starting with the cheapest/fastest:
+DroneCoil uses a fallback chain of Groq-hosted models, starting with the cheapest/fastest:
 
 ```
 1. llama-3.1-8b-instant       (cheapest, fastest)
@@ -645,15 +645,15 @@ flowchart TD
 
 ---
 
-## 7. GUI Architecture (athena_gui.py)
+## 7. GUI Architecture (dronecoil_gui.py)
 
-The GUI is a **GTK4 / libadwaita** shell that wraps `athena.py` as a subprocess. It does **not** contain any LLM or pentesting logic — it only renders Athena's output as cards.
+The GUI is a **GTK4 / libadwaita** shell that wraps `dronecoil.py` as a subprocess. It does **not** contain any LLM or pentesting logic — it only renders DroneCoil's output as cards.
 
 ```mermaid
 graph TD
-    subgraph GUI["athena_gui.py"]
-        App["Adw.Application<br/>AthenaApp"]
-        Win["AthenaWindow<br/>Adw.ApplicationWindow"]
+    subgraph GUI["dronecoil_gui.py"]
+        App["Adw.Application<br/>DroneCoilApp"]
+        Win["DroneCoilWindow<br/>Adw.ApplicationWindow"]
         ConvView["ConversationView<br/>scrollable card list"]
         InputBar["InputBar<br/>entry + send button"]
         Wizard["EngagementWizard<br/>target + goal dialog"]
@@ -670,27 +670,27 @@ graph TD
             TurnHeader
         end
 
-        AthenaProcess["AthenaProcess<br/>GObject, owns pty/subprocess"]
+        DroneCoilProcess["DroneCoilProcess<br/>GObject, owns pty/subprocess"]
         PanelParser["PanelParser<br/>state machine on output lines"]
         LineBuffer["LineBuffer<br/>byte accumulator"]
     end
 
-    athena_py["athena.py<br/>(subprocess)"]
+    dronecoil_py["dronecoil.py<br/>(subprocess)"]
 
     App --> Win
     Win --> ConvView
     Win --> InputBar
     Win --> Wizard
     ConvView --> Cards
-    InputBar -->|"write to stdin"| AthenaProcess
-    AthenaProcess -->|"spawn"| athena_py
-    athena_py -->|"stdout (ANSI)"| LineBuffer
+    InputBar -->|"write to stdin"| DroneCoilProcess
+    DroneCoilProcess -->|"spawn"| dronecoil_py
+    dronecoil_py -->|"stdout (ANSI)"| LineBuffer
     LineBuffer -->|"lines"| PanelParser
     PanelParser -->|"events {type, title, body}"| ConvView
     ConvView -->|"classify_panel_title()"| Cards
 ```
 
-**PanelParser** is the key bridge. It reads Athena's ANSI-formatted output line by line and emits structured events like `{type: "panel", title: "THOUGHT", body: "..."}`. `ConversationView.handle_event()` then routes each event to the right card class.
+**PanelParser** is the key bridge. It reads DroneCoil's ANSI-formatted output line by line and emits structured events like `{type: "panel", title: "THOUGHT", body: "..."}`. `ConversationView.handle_event()` then routes each event to the right card class.
 
 **Panel → Card mapping** (`classify_panel_title()`):
 
@@ -712,15 +712,15 @@ graph TD
 
 | Path | Purpose |
 |---|---|
-| `~/athena5/` (or wherever cloned) | Source code |
-| `/usr/local/bin/athena` | Symlink → `athena.py` |
-| `/usr/local/bin/athena-gui` | Symlink → `athena-gui` launcher script |
-| `~/.athena/` | Runtime data root |
-| `~/.athena/logs/session_*.txt` | Per-session ANSI-stripped logs |
-| `~/.athena/scope.json` | Engagement scope / RoE config |
-| `~/.local/share/applications/io.thepriest.Athena.desktop` | XDG desktop entry |
-| `~/.local/share/icons/hicolor/scalable/apps/io.thepriest.Athena.svg` | App icon |
-| `/tmp/athena_session.lock` | Boot-check cache (TTL: 6h) |
+| `~/dronecoil/` (or wherever cloned) | Source code |
+| `/usr/local/bin/dronecoil` | Symlink → `dronecoil.py` |
+| `/usr/local/bin/dronecoil-gui` | Symlink → `dronecoil-gui` launcher script |
+| `~/.dronecoil/` | Runtime data root |
+| `~/.dronecoil/logs/session_*.txt` | Per-session ANSI-stripped logs |
+| `~/.dronecoil/scope.json` | Engagement scope / RoE config |
+| `~/.local/share/applications/io.thepriest.DroneCoil.desktop` | XDG desktop entry |
+| `~/.local/share/icons/hicolor/scalable/apps/io.thepriest.DroneCoil.svg` | App icon |
+| `/tmp/dronecoil_session.lock` | Boot-check cache (TTL: 6h) |
 
 ---
 

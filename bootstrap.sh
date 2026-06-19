@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║              ATHENA BOOTSTRAP — one-command install              ║
+# ║              DRONECOIL BOOTSTRAP — one-command install              ║
 # ║                                                                  ║
-# ║   curl -fsSL https://raw.githubusercontent.com/the-priest/athena5/main/bootstrap.sh | bash
+# ║   curl -fsSL https://raw.githubusercontent.com/the-priest/dronecoil/main/bootstrap.sh | bash
 # ║                                                                  ║
 # ║   Clones (or updates) the repo, then runs install.sh.            ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
 set -euo pipefail
 
-REPO_URL="${ATHENA_REPO:-https://github.com/the-priest/athena5.git}"
-BRANCH="${ATHENA_BRANCH:-main}"
-DEST="${ATHENA_HOME:-$HOME/athena5}"
+REPO_URL="${DRONECOIL_REPO:-https://github.com/the-priest/dronecoil.git}"
+BRANCH="${DRONECOIL_BRANCH:-main}"
+DEST="${DRONECOIL_HOME:-$HOME/dronecoil}"
 INSTALL_ARGS=("$@")
 
 # ── colours ────────────────────────────────────────────────────────
@@ -25,7 +25,7 @@ err() { printf '%s\n' "${RED}[x]${RST} $*" >&2; exit 1; }
 
 cat <<EOF
 ${MAG}
-  ┌─ ATHENA bootstrap ──────────────────────────────────┐
+  ┌─ DRONECOIL bootstrap ──────────────────────────────────┐
   │  repo:   ${REPO_URL}
   │  branch: ${BRANCH}
   │  dest:   ${DEST}
@@ -53,7 +53,7 @@ if [[ -d "$DEST/.git" ]]; then
     git -C "$DEST" reset --hard "origin/$BRANCH" --quiet
 else
     if [[ -e "$DEST" ]]; then
-        err "$DEST exists and isn't a git checkout — move it or set ATHENA_HOME"
+        err "$DEST exists and isn't a git checkout — move it or set DRONECOIL_HOME"
     fi
     echo "${GRN}[ok]${RST} cloning $REPO_URL → $DEST"
     git clone --depth=1 --branch "$BRANCH" --quiet "$REPO_URL" "$DEST"
@@ -63,5 +63,5 @@ fi
 echo "${GRN}[ok]${RST} handing off to install.sh"
 echo ""
 cd "$DEST"
-chmod +x install.sh athena.py athena_gui.py athena-gui 2>/dev/null || true
+chmod +x install.sh dronecoil.py dronecoil_gui.py dronecoil-gui 2>/dev/null || true
 exec bash install.sh "${INSTALL_ARGS[@]}"

@@ -1,7 +1,7 @@
-# Athena Customization Guide
+# DroneCoil Customization Guide
 
 > How to add new agents, workflows, tools, prompts, KB sections, and supported models.
-> All customization is done directly in `athena.py` — no build step required.
+> All customization is done directly in `dronecoil.py` — no build step required.
 
 ---
 
@@ -23,12 +23,12 @@
 
 ## 1. Adding a New Specialist Agent
 
-Agents live in the `AGENT_SPECS` dict (~line 1135 in `athena.py`). Adding one is three steps.
+Agents live in the `AGENT_SPECS` dict (~line 1135 in `dronecoil.py`). Adding one is three steps.
 
 ### Step 1 — Add the spec
 
 ```python
-# athena.py  ~line 1135
+# dronecoil.py  ~line 1135
 AGENT_SPECS = {
     # ... existing agents ...
 
@@ -37,7 +37,7 @@ AGENT_SPECS = {
         "icon": "📡",
         "color": "96",                  # ANSI colour (96 = bright cyan)
         "persona": (
-            "You are Athena's IoT specialist. You enumerate embedded devices, "
+            "You are DroneCoil's IoT specialist. You enumerate embedded devices, "
             "firmware, default credentials, MQTT/CoAP/Zigbee, and exposed "
             "management interfaces (Telnet/serial/web dashboards)."
         ),
@@ -81,7 +81,7 @@ The strategist agent emits `[AGENT]<role>[/AGENT]` to hand off. The valid role n
 Workflows live in the `WORKFLOWS` dict (~line 3550). A workflow is a name, description, and a list of `(task_title, phase)` seed tuples.
 
 ```python
-# athena.py  ~line 3550
+# dronecoil.py  ~line 3550
 WORKFLOWS = {
     # ... existing 1-23 ...
 
@@ -126,7 +126,7 @@ Tools require changes in three places: `ToolBuilder`, `TOOL_DISPATCH`, and optio
 ### Step 1 — Add a `ToolBuilder` static method
 
 ```python
-# athena.py  ~line 2464  (inside class ToolBuilder)
+# dronecoil.py  ~line 2464  (inside class ToolBuilder)
 class ToolBuilder:
     # ... existing methods ...
 
@@ -153,7 +153,7 @@ class ToolBuilder:
 ### Step 2 — Register in `TOOL_DISPATCH`
 
 ```python
-# athena.py  ~line 2833
+# dronecoil.py  ~line 2833
 TOOL_DISPATCH = {
     # ... existing entries ...
     "mosquitto_sub": ToolBuilder.mosquitto_sub,
@@ -163,7 +163,7 @@ TOOL_DISPATCH = {
 ### Step 3 — Register the binary for pre-flight check
 
 ```python
-# athena.py  ~line 2868
+# dronecoil.py  ~line 2868
 TOOL_BINARY = {
     # ... existing entries ...
     "mosquitto_sub": "mosquitto_sub",    # binary name for `which` check
@@ -175,7 +175,7 @@ TOOL_BINARY = {
 If the LLM tends to emit slightly different arg names, add them to `KWARG_SYNONYMS`:
 
 ```python
-# athena.py  ~line 106
+# dronecoil.py  ~line 106
 KWARG_SYNONYMS = {
     # ... existing entries ...
     "mosquitto_sub": {
@@ -191,7 +191,7 @@ KWARG_SYNONYMS = {
 ### Step 5 — Add it to `KALI_TOOLS` for the tools summary prompt
 
 ```python
-# athena.py  ~line 334
+# dronecoil.py  ~line 334
 KALI_TOOLS = {
     # ... existing categories ...
     "iot": [
@@ -205,7 +205,7 @@ After these changes the LLM can emit:
 ```
 [TOOL]mosquitto_sub[/TOOL][ARGS]{"host":"192.168.1.50","topic":"#"}[/ARGS]
 ```
-and Athena will translate it to `mosquitto_sub -h 192.168.1.50 -p 1883 -t # -v`.
+and DroneCoil will translate it to `mosquitto_sub -h 192.168.1.50 -p 1883 -t # -v`.
 
 ---
 
@@ -215,12 +215,12 @@ There are three levels of prompt text you can edit:
 
 ### 4.1 Global voice — `MENTOR_PERSONA` (~line 3920 area)
 
-This is injected into **every** system prompt. It controls Athena's tone, teaching style, and `[MANUAL]` behaviour. Edit `MENTOR_PERSONA` in `athena.py` to change the personality globally.
+This is injected into **every** system prompt. It controls DroneCoil's tone, teaching style, and `[MANUAL]` behaviour. Edit `MENTOR_PERSONA` in `dronecoil.py` to change the personality globally.
 
 ```python
 MENTOR_PERSONA = (
-    "── ATHENA — VOICE & TEACHING DUTY ──\n"
-    "You are Athena: ex-NSA, fifteen years red-team. ..."
+    "── DRONECOIL — VOICE & TEACHING DUTY ──\n"
+    "You are DroneCoil: ex-NSA, fifteen years red-team. ..."
     # Change the persona paragraph here
 )
 ```
@@ -247,7 +247,7 @@ KB sections are raw text injected into system prompts when relevant. They are ch
 ### Step 1 — Define the section
 
 ```python
-# athena.py  ~line 720  (after existing KB entries)
+# dronecoil.py  ~line 720  (after existing KB entries)
 KB[15] = r"""
 S15 IoT ATTACK PATTERNS:
 Default credential lists: admin/admin, admin/password, root/root, guest/guest
@@ -262,7 +262,7 @@ Web dashboard: look for /cgi-bin/, /api/v1/, /admin — default UI often unauthe
 ### Step 2 — Map it to workflows and agent roles
 
 ```python
-# athena.py  ~line 1031
+# dronecoil.py  ~line 1031
 WORKFLOW_KB_MAP = {
     # ... existing ...
     "24": {1, 2, 15},    # network recon + your new IoT section
@@ -272,7 +272,7 @@ WORKFLOW_KB_MAP = {
 `get_kb_sections()` also accepts `agent_role` so you can add agent-based KB defaults:
 
 ```python
-# athena.py  inside get_kb_sections()  ~line 1073
+# dronecoil.py  inside get_kb_sections()  ~line 1073
 AGENT_KB_MAP = {
     # ... add this if you want role-based KB injection ...
     "iot": {15},
@@ -288,7 +288,7 @@ AGENT_KB_MAP = {
 ### Add to `PROVIDER_CHAIN`
 
 ```python
-# athena.py  ~line 56
+# dronecoil.py  ~line 56
 PROVIDER_CHAIN = [
     ("llama-3.1-8b-instant",                      "LLaMA 3.1 8B"),   # cheapest first
     # ... existing entries ...
@@ -313,7 +313,7 @@ Currently all inference goes through the `groq` Python package. To use a differe
 Finding extraction runs `FINDING_PATTERNS` against subprocess output. Add a new regex to capture a new artifact type:
 
 ```python
-# athena.py  ~line 487
+# dronecoil.py  ~line 487
 FINDING_PATTERNS = {
     # ... existing ...
 
@@ -330,7 +330,7 @@ FINDING_PATTERNS = {
 `attack_id_for_finding(ftype)` (~line 704) maps finding types to ATT&CK technique IDs. Add your new type:
 
 ```python
-# athena.py  ~line 704  (inside attack_id_for_finding)
+# dronecoil.py  ~line 704  (inside attack_id_for_finding)
 FINDING_ATTACK_MAP = {
     # ... existing ...
     "api_key":   ("T1552.001", "Credentials In Files", "TA0006"),
@@ -345,7 +345,7 @@ FINDING_ATTACK_MAP = {
 `COMMAND_TIMEOUTS` is a list of `(regex_pattern, seconds)` pairs (~line 108). First match wins. Add or tighten entries:
 
 ```python
-# athena.py  ~line 108
+# dronecoil.py  ~line 108
 COMMAND_TIMEOUTS = [
     # ... existing entries ...
 
@@ -362,10 +362,10 @@ DEFAULT_COMMAND_TIMEOUT = 300   # catch-all
 
 ## 9. Customizing Scope / RoE Defaults
 
-The default scope config is written to `~/.athena/scope.json` on first launch if the file doesn't exist. Change `DEFAULT_SCOPE` (~line 3088) to set different defaults:
+The default scope config is written to `~/.dronecoil/scope.json` on first launch if the file doesn't exist. Change `DEFAULT_SCOPE` (~line 3088) to set different defaults:
 
 ```python
-# athena.py  ~line 3088
+# dronecoil.py  ~line 3088
 DEFAULT_SCOPE = {
     "enabled":  True,               # ← flip to True to enforce scope by default
     "allowed_cidrs":   ["10.10.10.0/24"],   # tighter default
@@ -379,16 +379,16 @@ DEFAULT_SCOPE = {
 }
 ```
 
-The operator can also edit `~/.athena/scope.json` directly between sessions.
+The operator can also edit `~/.dronecoil/scope.json` directly between sessions.
 
 ---
 
 ## 10. Adding REPL Commands
 
-The main REPL loop lives at the bottom of `athena.py` inside `main()` (or in the `AthenaSession.repl()` method). Find the `if cmd == "..."` block and add a new branch:
+The main REPL loop lives at the bottom of `dronecoil.py` inside `main()` (or in the `DroneCoilSession.repl()` method). Find the `if cmd == "..."` block and add a new branch:
 
 ```python
-# athena.py  ~line 6150  (inside the REPL while loop)
+# dronecoil.py  ~line 6150  (inside the REPL while loop)
 elif cmd == "iot":
     # List all IoT-related findings
     iot_findings = [f for f in self.ptt.findings if f.ftype in ("ip", "port", "cred")]
@@ -404,7 +404,7 @@ elif cmd == "mqtt":
 Then register the command in the help menu output at the bottom of the help block:
 
 ```python
-# athena.py  ~line 6070 (help block)
+# dronecoil.py  ~line 6070 (help block)
 print("   \033[97mmqtt\033[0m      Quick MQTT topic dump")
 ```
 
@@ -412,12 +412,12 @@ print("   \033[97mmqtt\033[0m      Quick MQTT topic dump")
 
 ## 11. Extending the GUI with a New Card Type
 
-Cards live in `athena_gui.py`. Each card is a `Gtk.Box` subclass.
+Cards live in `dronecoil_gui.py`. Each card is a `Gtk.Box` subclass.
 
 ### Step 1 — Create the card class
 
 ```python
-# athena_gui.py  ~line 800  (after existing card classes)
+# dronecoil_gui.py  ~line 800  (after existing card classes)
 class MqttCard(Gtk.Box):
     def __init__(self, body: str):
         super().__init__(orientation=Gtk.Orientation.VERTICAL)
@@ -435,7 +435,7 @@ class MqttCard(Gtk.Box):
 ### Step 2 — Register in `classify_panel_title()`
 
 ```python
-# athena_gui.py  ~line 856
+# dronecoil_gui.py  ~line 856
 def classify_panel_title(title: str) -> str:
     t = title.upper()
     # ... existing checks ...
@@ -447,7 +447,7 @@ def classify_panel_title(title: str) -> str:
 ### Step 3 — Route in `ConversationView._handle_panel()`
 
 ```python
-# athena_gui.py  ~line 951
+# dronecoil_gui.py  ~line 951
 def _handle_panel(self, title: str, body: str) -> Optional[str]:
     kind = classify_panel_title(title)
     # ... existing if/elif ...
@@ -459,7 +459,7 @@ def _handle_panel(self, title: str, body: str) -> Optional[str]:
 ### Step 4 — Add CSS for the card
 
 ```python
-# athena_gui.py  ~line 320  (inside load_css() CSS string)
+# dronecoil_gui.py  ~line 320  (inside load_css() CSS string)
 CSS = """
 /* ... existing ... */
 .mqtt-card {
@@ -469,4 +469,4 @@ CSS = """
 """
 ```
 
-The GUI will now render a styled `MqttCard` whenever `athena.py` emits a panel with title matching `MQTT`.
+The GUI will now render a styled `MqttCard` whenever `dronecoil.py` emits a panel with title matching `MQTT`.

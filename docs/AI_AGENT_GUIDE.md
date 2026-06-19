@@ -1,4 +1,4 @@
-# Athena — AI Agent Onboarding Guide
+# DroneCoil — AI Agent Onboarding Guide
 
 > **Audience:** AI coding agents (Copilot, Claude, GPT, etc.) taking over or contributing to this project.
 > **Purpose:** Fast-ramp on architecture, safe editing patterns, testing/debugging methodology, and in-session terminal commands.
@@ -24,7 +24,7 @@
 
 ## 1. What This Project Is
 
-Athena is a **single-file AI pentesting copilot** (`athena.py`, ~6,300 lines). It wraps a free-tier Groq LLM around a structured pentesting engine. The operator types a target and an objective; Athena:
+DroneCoil is a **single-file AI pentesting copilot** (`dronecoil.py`, ~6,300 lines). It wraps a free-tier Groq LLM around a structured pentesting engine. The operator types a target and an objective; DroneCoil:
 
 1. Seeds a **Pentesting Task Tree (PTT)** — a rooted task tree representing the full engagement.
 2. Selects a **specialist agent** for each PTT node (recon, web, AD, privesc, etc.).
@@ -33,17 +33,17 @@ Athena is a **single-file AI pentesting copilot** (`athena.py`, ~6,300 lines). I
 5. Asks the operator `y/n/q`, runs the command via `subprocess`, and regex-extracts findings from real output.
 6. Updates the PTT and attack graph, then loops.
 
-**Everything lives in `athena.py`.** The file is intentionally monolithic so operators can fork, diff, and patch without a build system. All configuration is top-level constants.
+**Everything lives in `dronecoil.py`.** The file is intentionally monolithic so operators can fork, diff, and patch without a build system. All configuration is top-level constants.
 
 ---
 
 ## 2. File Map — Where Everything Lives
 
 ```
-Grenulus-CLI/
-├── athena.py          ← THE ENGINE  (~6,300 lines, single source of truth)
-├── athena_gui.py      ← GTK4 GUI shell (~1,566 lines)
-├── athena-gui         ← Bash launcher for the GUI
+DroneCoil/
+├── dronecoil.py          ← THE ENGINE  (~6,300 lines, single source of truth)
+├── dronecoil_gui.py      ← GTK4 GUI shell (~1,566 lines)
+├── dronecoil-gui         ← Bash launcher for the GUI
 ├── bootstrap.sh       ← Remote one-shot installer
 ├── install.sh         ← Local installer (symlinks, deps, desktop entry)
 ├── requirements.txt   ← groq>=0.4.0, networkx>=3.0
@@ -54,7 +54,7 @@ Grenulus-CLI/
     └── REFERENCE.md        ← Quick-lookup tables for all components
 ```
 
-### Critical line numbers in `athena.py`
+### Critical line numbers in `dronecoil.py`
 
 | Component | Line (approx.) |
 |---|---|
@@ -73,7 +73,7 @@ Grenulus-CLI/
 | `ContextManager` class | ~3499 |
 | `WORKFLOWS` dict | ~3550 |
 | `build_system_prompt()` | ~3920 |
-| `AthenaSession.__init__()` | ~4194 |
+| `DroneCoilSession.__init__()` | ~4194 |
 | `_think_with_fallback()` | ~4363 |
 | `parse_specialist_response()` | ~5200 (approx) |
 | `show_workflow_menu()` | ~5690 |
@@ -81,7 +81,7 @@ Grenulus-CLI/
 | `show_agents()` | ~6096 |
 | `repl()` / REPL while loop | ~6100 |
 
-> **Tip:** `grep -n "def show_workflow_menu\|def show_agents\|def repl\|AGENT_SPECS\|WORKFLOWS" athena.py` is the fastest way to jump to any section.
+> **Tip:** `grep -n "def show_workflow_menu\|def show_agents\|def repl\|AGENT_SPECS\|WORKFLOWS" dronecoil.py` is the fastest way to jump to any section.
 
 ---
 
@@ -131,7 +131,7 @@ Operator input (CLI or GUI)
 | `TOOL_DISPATCH` | ~line 2833 | Register ToolBuilder methods |
 | `TOOL_BINARY` | ~line 2868 | Register binary names for `which` check |
 | `WORKFLOWS` | ~line 3550 | Add/edit built-in workflows |
-| `MENTOR_PERSONA` | ~line 3920 | Change Athena's global voice |
+| `MENTOR_PERSONA` | ~line 3920 | Change DroneCoil's global voice |
 | `CORE_RULES` | after MENTOR_PERSONA | Change output tag format rules |
 | `DEFAULT_SCOPE` | ~line 3088 | Change default RoE settings |
 
@@ -144,8 +144,8 @@ Operator input (CLI or GUI)
 Before touching anything else, verify the file parses cleanly:
 
 ```bash
-python3 -m py_compile athena.py && echo "OK"
-python3 -m py_compile athena_gui.py && echo "OK"
+python3 -m py_compile dronecoil.py && echo "OK"
+python3 -m py_compile dronecoil_gui.py && echo "OK"
 ```
 
 If either fails, the entire tool breaks. Fix syntax errors before doing anything else.
@@ -153,15 +153,15 @@ If either fails, the entire tool breaks. Fix syntax errors before doing anything
 ### 5.2 Import Check
 
 ```bash
-python3 -c "import ast; ast.parse(open('athena.py').read()); print('AST OK')"
+python3 -c "import ast; ast.parse(open('dronecoil.py').read()); print('AST OK')"
 ```
 
 ### 5.3 Smoke Test — Dry Run (No API Key Needed)
 
-Start Athena without a valid API key to verify boot, REPL wiring, and command parsing:
+Start DroneCoil without a valid API key to verify boot, REPL wiring, and command parsing:
 
 ```bash
-GROQ_API_KEY=test python3 athena.py
+GROQ_API_KEY=test python3 dronecoil.py
 ```
 
 Expected: banner prints, boot sequence runs, `set_target()` prompts. If it crashes before the prompt, something structural is broken.
@@ -197,9 +197,9 @@ import unittest.mock as m
 with m.patch.dict('sys.modules', {'groq': m.MagicMock()}):
     # Import only the ToolBuilder class
     import importlib, types
-    src = open('athena.py').read()
+    src = open('dronecoil.py').read()
     # Quick extraction: exec just the ToolBuilder section
-    exec(compile(src, 'athena.py', 'exec'), {'__builtins__': __builtins__})
+    exec(compile(src, 'dronecoil.py', 'exec'), {'__builtins__': __builtins__})
     # Test nmap
     result = ToolBuilder.nmap(target='10.0.0.1', ports='1-1000', stealth=True)
     print('nmap test:', result)
@@ -229,13 +229,13 @@ EOF
 
 ### 5.7 System Prompt Inspection
 
-To see what system prompt Athena would build for a given agent and workflow, add a temporary debug print to `build_system_prompt()` and run:
+To see what system prompt DroneCoil would build for a given agent and workflow, add a temporary debug print to `build_system_prompt()` and run:
 
 ```bash
 GROQ_API_KEY=test python3 -c "
 import sys
 sys.modules['groq'] = __import__('unittest.mock', fromlist=['MagicMock']).MagicMock()
-exec(open('athena.py').read())
+exec(open('dronecoil.py').read())
 # Access the running session
 "
 ```
@@ -245,21 +245,21 @@ Or use the `prompt show` REPL command (see §8) during a live dry-run session.
 ### 5.8 GUI Syntax Check
 
 ```bash
-python3 -m py_compile athena_gui.py && echo "GUI OK"
+python3 -m py_compile dronecoil_gui.py && echo "GUI OK"
 ```
 
-If you haven't changed `athena_gui.py`, skip this step.
+If you haven't changed `dronecoil_gui.py`, skip this step.
 
 ---
 
 ## 6. Pre-Push Checklist
 
-Run through this list in order before committing any change to `athena.py`:
+Run through this list in order before committing any change to `dronecoil.py`:
 
 ```
-[ ] 1.  python3 -m py_compile athena.py            — zero errors
-[ ] 2.  python3 -m py_compile athena_gui.py        — zero errors (if GUI changed)
-[ ] 3.  Dry-run boot: GROQ_API_KEY=test python3 athena.py
+[ ] 1.  python3 -m py_compile dronecoil.py            — zero errors
+[ ] 2.  python3 -m py_compile dronecoil_gui.py        — zero errors (if GUI changed)
+[ ] 3.  Dry-run boot: GROQ_API_KEY=test python3 dronecoil.py
         └─ Banner appears, prompt appears, no traceback on launch
 [ ] 4.  REPL smoke test: type every built-in command, verify no traceback
 [ ] 5.  If you added/changed a TOOL:
@@ -281,14 +281,14 @@ Run through this list in order before committing any change to `athena.py`:
         └─ show_help() text updated
         └─ docs/REFERENCE.md REPL commands table updated
 [ ] 10. No hardcoded API keys, passwords, or secrets in any file
-[ ] 11. grep -n "TODO\|FIXME\|HACK\|XXX" athena.py  — review any you added
+[ ] 11. grep -n "TODO\|FIXME\|HACK\|XXX" dronecoil.py  — review any you added
 ```
 
 ---
 
 ## 7. In-Session Terminal Commands
 
-These are commands you type at the Athena REPL prompt (`⚔ priest ›`) during a live session. They do **not** require restarting the tool.
+These are commands you type at the DroneCoil REPL prompt (`⚔ priest ›`) during a live session. They do **not** require restarting the tool.
 
 ### 7.1 Built-In Single-Word Commands
 
@@ -321,7 +321,7 @@ These allow in-session editing without touching the source file.
 ```
 workflow add
 ```
-Interactive wizard. Prompts for name, description, and seed tasks (title + phase pairs). Adds the workflow to the session's `WORKFLOWS` dict. **Session-only** — not persisted to `athena.py`.
+Interactive wizard. Prompts for name, description, and seed tasks (title + phase pairs). Adds the workflow to the session's `WORKFLOWS` dict. **Session-only** — not persisted to `dronecoil.py`.
 
 ```
 workflow edit <key>
@@ -383,11 +383,11 @@ Quick lookup for the sub-command syntax added in the extended REPL.
 
 ## 9. Common Change Recipes
 
-These are complete step-by-step recipes for the most frequent changes. All edits are in `athena.py` unless noted.
+These are complete step-by-step recipes for the most frequent changes. All edits are in `dronecoil.py` unless noted.
 
 ### Recipe A — Add a New Workflow
 
-1. Open `athena.py`, go to `WORKFLOWS` (~line 3550).
+1. Open `dronecoil.py`, go to `WORKFLOWS` (~line 3550).
 2. Add a new key (next number or descriptive string):
    ```python
    "24": {
@@ -409,7 +409,7 @@ These are complete step-by-step recipes for the most frequent changes. All edits
 
 ### Recipe B — Edit an Existing Agent's Behaviour
 
-1. Open `athena.py`, go to `AGENT_SPECS` (~line 1135).
+1. Open `dronecoil.py`, go to `AGENT_SPECS` (~line 1135).
 2. Find the agent key (e.g., `"recon"`).
 3. Edit `persona` (strategic role description) or `extra_rules` (preferred tool ordering).
 4. Run pre-push checklist §6, items 1, 3, 4.
@@ -455,7 +455,7 @@ These are complete step-by-step recipes for the most frequent changes. All edits
        self._your_handler()
    ```
    **Important:** add it *before* the final `else: self._agent_loop(...)` clause.
-3. Add the handler method to `AthenaSession`.
+3. Add the handler method to `DroneCoilSession`.
 4. Update `show_help()` (~line 6063) with the command description.
 5. Update `docs/REFERENCE.md` REPL commands table.
 6. Run pre-push checklist §6, item 9.
@@ -486,7 +486,7 @@ Sets the provider to position 5 (LLaMA 3.3 70B). Takes effect on the next LLM ca
 
 **Permanently (for the session only, set at boot):**
 ```bash
-GROQ_API_KEY=your_key python3 athena.py
+GROQ_API_KEY=your_key python3 dronecoil.py
 # then at REPL:
 model set 5
 ```
@@ -499,7 +499,7 @@ model set 5
 
 1. At the REPL, type `prompt show` to see the exact system prompt that will be sent.
 2. Check the `[THOUGHT]` tag in the LLM output — it reveals the model's reasoning.
-3. Check `~/.athena/logs/session_*.txt` — every turn's prompt, response, and extracted output is logged there (ANSI stripped).
+3. Check `~/.dronecoil/logs/session_*.txt` — every turn's prompt, response, and extracted output is logged there (ANSI stripped).
 4. If the model keeps producing `[CONF]red[/CONF]`, check:
    - Is the target set? (`target` command)
    - Is the PTT populated? (`tree` command)
@@ -529,20 +529,20 @@ model set 5
 
 Every session writes a log to:
 ```
-~/.athena/logs/session_YYYYMMDD_HHMMSS.txt
+~/.dronecoil/logs/session_YYYYMMDD_HHMMSS.txt
 ```
 ANSI escape codes are stripped. Each entry is prefixed:
 - `[PRIEST]` — operator input
-- `[ATHENA]` — Athena's print output
+- `[DRONECOIL]` — DroneCoil's print output
 - `[CMD]` / `[TOOL]` — dispatched commands
 - `[OUTPUT]` — subprocess stdout (trimmed)
 - `[FINDING]` — extracted findings
 
 ### Force re-run the boot check
 
-The tool availability check is cached for 6 hours at `/tmp/athena_session.lock`. Delete it to force re-check:
+The tool availability check is cached for 6 hours at `/tmp/dronecoil_session.lock`. Delete it to force re-check:
 ```bash
-rm -f /tmp/athena_session.lock
+rm -f /tmp/dronecoil_session.lock
 ```
 
 ### Verbose subprocess output
@@ -553,7 +553,7 @@ rm -f /tmp/athena_session.lock
 
 To see why a given PTT node routed to a specific agent:
 ```bash
-grep -n "_select_agent\|PHASE_TO_AGENT" athena.py | head -20
+grep -n "_select_agent\|PHASE_TO_AGENT" dronecoil.py | head -20
 ```
 Then trace `ptt_node.phase` → `PHASE_TO_AGENT[phase]` → `AGENT_SPECS[key]`.
 
@@ -562,7 +562,7 @@ Then trace `ptt_node.phase` → `PHASE_TO_AGENT[phase]` → `AGENT_SPECS[key]`.
 ```
 scope        ← at the REPL, shows current allowed CIDRs / domains
 ```
-Or inspect `~/.athena/scope.json` directly.
+Or inspect `~/.dronecoil/scope.json` directly.
 
 ### Resetting everything without restarting
 

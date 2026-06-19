@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║              ATHENA INSTALLER — v7.3 (GUI + CLI)                 ║
+# ║              DRONECOIL INSTALLER — v7.3 (GUI + CLI)                 ║
 # ║   Smart install: detects what's missing, installs only that.     ║
 # ║   Sets up both the CLI shortcut and the Phosh app icon.          ║
 # ╚══════════════════════════════════════════════════════════════════╝
@@ -8,7 +8,7 @@
 # Usage:
 #   bash install.sh             # full install (CLI + GUI)
 #   bash install.sh --cli-only  # skip GTK/VTE, CLI only
-#   bash install.sh --gui-only  # skip the /usr/local/bin/athena CLI link
+#   bash install.sh --gui-only  # skip the /usr/local/bin/dronecoil CLI link
 #   bash install.sh --quiet     # less chatty
 #
 # Re-runnable.  Existing config / API keys are preserved.
@@ -59,12 +59,12 @@ fi
 
 # ── paths ──────────────────────────────────────────────────────────
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="${ATHENA_INSTALL_DIR:-/opt/athena5}"
-DATA_DIR="$HOME/.athena"
+INSTALL_DIR="${DRONECOIL_INSTALL_DIR:-/opt/dronecoil}"
+DATA_DIR="$HOME/.dronecoil"
 APPS_DIR="$HOME/.local/share/applications"
 ICON_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
-CLI_BIN="/usr/local/bin/athena"
-GUI_BIN="/usr/local/bin/athena-gui"
+CLI_BIN="/usr/local/bin/dronecoil"
+GUI_BIN="/usr/local/bin/dronecoil-gui"
 
 # ── helpers ────────────────────────────────────────────────────────
 has() { command -v "$1" >/dev/null 2>&1; }
@@ -223,29 +223,29 @@ else
     sudo_run chown "$USER:$USER" "$INSTALL_DIR"
 fi
 
-for f in athena.py athena_gui.py athena-gui requirements.txt README.md; do
+for f in dronecoil.py dronecoil_gui.py dronecoil-gui requirements.txt README.md; do
     if [[ -f "$SRC_DIR/$f" ]]; then
         cp -f "$SRC_DIR/$f" "$INSTALL_DIR/$f"
     fi
 done
-chmod +x "$INSTALL_DIR/athena.py" "$INSTALL_DIR/athena-gui" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/dronecoil.py" "$INSTALL_DIR/dronecoil-gui" 2>/dev/null || true
 ok "files copied"
 
-# ── 5. ~/.athena dirs ──────────────────────────────────────────────
+# ── 5. ~/.dronecoil dirs ──────────────────────────────────────────────
 mkdir -p "$DATA_DIR/logs"
 ok "$DATA_DIR/ ready"
 
 # ── 6. CLI symlink ─────────────────────────────────────────────────
 if [[ $GUI_ONLY == 0 ]]; then
     step "CLI shortcut: $CLI_BIN"
-    if sudo_run ln -sf "$INSTALL_DIR/athena.py" "$CLI_BIN" 2>/dev/null; then
-        ok "$CLI_BIN → $INSTALL_DIR/athena.py"
+    if sudo_run ln -sf "$INSTALL_DIR/dronecoil.py" "$CLI_BIN" 2>/dev/null; then
+        ok "$CLI_BIN → $INSTALL_DIR/dronecoil.py"
     else
         warn "no sudo — adding alias to shell rc files instead"
         for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
             [[ -f "$rc" ]] || continue
-            if ! grep -q "^alias athena=" "$rc" 2>/dev/null; then
-                printf "alias athena='python3 %s'\n" "$INSTALL_DIR/athena.py" >> "$rc"
+            if ! grep -q "^alias dronecoil=" "$rc" 2>/dev/null; then
+                printf "alias dronecoil='python3 %s'\n" "$INSTALL_DIR/dronecoil.py" >> "$rc"
                 ok "alias added to $rc"
             fi
         done
@@ -255,10 +255,10 @@ fi
 # ── 7. GUI launcher + desktop entry + icon ─────────────────────────
 if [[ $CLI_ONLY == 0 ]]; then
     step "GUI shortcut: $GUI_BIN"
-    if sudo_run ln -sf "$INSTALL_DIR/athena-gui" "$GUI_BIN" 2>/dev/null; then
-        ok "$GUI_BIN → $INSTALL_DIR/athena-gui"
+    if sudo_run ln -sf "$INSTALL_DIR/dronecoil-gui" "$GUI_BIN" 2>/dev/null; then
+        ok "$GUI_BIN → $INSTALL_DIR/dronecoil-gui"
     else
-        warn "no sudo — $GUI_BIN not linked (run athena-gui from $INSTALL_DIR)"
+        warn "no sudo — $GUI_BIN not linked (run dronecoil-gui from $INSTALL_DIR)"
     fi
 
     step "Desktop entry + icon"
@@ -268,23 +268,23 @@ if [[ $CLI_ONLY == 0 ]]; then
     DESKTOP_SRC=""
     ICON_SRC=""
     for d in "$SRC_DIR/data" "$SRC_DIR"; do
-        [[ -z "$DESKTOP_SRC" && -f "$d/io.thepriest.Athena.desktop" ]] && DESKTOP_SRC="$d/io.thepriest.Athena.desktop"
-        [[ -z "$ICON_SRC"    && -f "$d/io.thepriest.Athena.svg"     ]] && ICON_SRC="$d/io.thepriest.Athena.svg"
+        [[ -z "$DESKTOP_SRC" && -f "$d/io.thepriest.DroneCoil.desktop" ]] && DESKTOP_SRC="$d/io.thepriest.DroneCoil.desktop"
+        [[ -z "$ICON_SRC"    && -f "$d/io.thepriest.DroneCoil.svg"     ]] && ICON_SRC="$d/io.thepriest.DroneCoil.svg"
     done
 
     if [[ -n "$DESKTOP_SRC" ]]; then
-        cp -f "$DESKTOP_SRC" "$APPS_DIR/io.thepriest.Athena.desktop"
-        ok "app registered: $APPS_DIR/io.thepriest.Athena.desktop"
+        cp -f "$DESKTOP_SRC" "$APPS_DIR/io.thepriest.DroneCoil.desktop"
+        ok "app registered: $APPS_DIR/io.thepriest.DroneCoil.desktop"
     else
-        warn "io.thepriest.Athena.desktop not found in repo — app icon won't appear in launcher"
-        warn "(run 'athena-gui' from terminal anyway)"
+        warn "io.thepriest.DroneCoil.desktop not found in repo — app icon won't appear in launcher"
+        warn "(run 'dronecoil-gui' from terminal anyway)"
     fi
 
     if [[ -n "$ICON_SRC" ]]; then
-        cp -f "$ICON_SRC" "$ICON_DIR/io.thepriest.Athena.svg"
-        ok "icon installed:  $ICON_DIR/io.thepriest.Athena.svg"
+        cp -f "$ICON_SRC" "$ICON_DIR/io.thepriest.DroneCoil.svg"
+        ok "icon installed:  $ICON_DIR/io.thepriest.DroneCoil.svg"
     else
-        warn "io.thepriest.Athena.svg not found — using default icon"
+        warn "io.thepriest.DroneCoil.svg not found — using default icon"
     fi
 
     # Refresh caches (best-effort)
@@ -329,11 +329,11 @@ say "${GRN}${MAG}╭────────────────────
 say "${GRN}${MAG}│${RST}  install complete                                ${MAG}│${RST}"
 say "${GRN}${MAG}├──────────────────────────────────────────────────┤${RST}"
 if [[ $CLI_ONLY == 0 ]]; then
-say "${MAG}│${RST}  ${GRN}GUI${RST}   tap the Athena icon in your app grid    ${MAG}│${RST}"
-say "${MAG}│${RST}        or run:  ${YEL}athena-gui${RST}                       ${MAG}│${RST}"
+say "${MAG}│${RST}  ${GRN}GUI${RST}   tap the DroneCoil icon in your app grid    ${MAG}│${RST}"
+say "${MAG}│${RST}        or run:  ${YEL}dronecoil-gui${RST}                       ${MAG}│${RST}"
 fi
 if [[ $GUI_ONLY == 0 ]]; then
-say "${MAG}│${RST}  ${GRN}CLI${RST}   run:  ${YEL}athena${RST}                            ${MAG}│${RST}"
+say "${MAG}│${RST}  ${GRN}CLI${RST}   run:  ${YEL}dronecoil${RST}                            ${MAG}│${RST}"
 fi
 say "${GRN}${MAG}╰──────────────────────────────────────────────────╯${RST}"
 say ""

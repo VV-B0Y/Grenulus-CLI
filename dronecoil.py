@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════════════════╗
-║           ATHENA — AI Offensive Security Agent v7.3              ║
+║           DRONECOIL — AI Offensive Security Agent v7.3              ║
 ║   Bare-metal Kali NetHunter  ·  Commander: The Priest             ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║                                                                  ║
@@ -77,10 +77,10 @@ PROVIDER_CHAIN = [
 # PATHS, LIMITS, MARKERS
 # ═════════════════════════════════════════════════════════════════════
 
-INSTALL_DIR = os.path.expanduser("~/.athena")
+INSTALL_DIR = os.path.expanduser("~/.dronecoil")
 LOG_DIR     = os.path.join(INSTALL_DIR, "logs")
 SCOPE_FILE  = os.path.join(INSTALL_DIR, "scope.json")
-BOOT_LOCK   = "/tmp/athena_session.lock"
+BOOT_LOCK   = "/tmp/dronecoil_session.lock"
 
 # v7.3 — smart context: keep more in memory, send less by default
 MAX_HISTORY_MESSAGES   = 32   # how many turns kept in RAM
@@ -131,7 +131,7 @@ COMMAND_TIMEOUTS = [
 DEFAULT_COMMAND_TIMEOUT = 300  # 5 min ceiling on anything else
 
 # Markers in stdout/stderr that mean "needs root".  When detected after
-# a non-sudo command, Athena offers an automatic sudo retry.
+# a non-sudo command, DroneCoil offers an automatic sudo retry.
 SUDO_RETRY_MARKERS = [
     "operation not permitted",
     "permission denied",
@@ -308,8 +308,8 @@ INTERACTIVE_BLOCKED = {
     "mysql -u":     "Use: mysql -u USER -pPASS -e 'QUERY;' for non-interactive query",
     "psql":         "Use: psql -c 'QUERY;' for non-interactive query",
     "telnet":       "Use: nc -nv [IP] [PORT] for one-shot banner grab",
-    "nc -l":        "Listener blocked — would hang Athena. Run in separate terminal.",
-    "ncat -l":      "Listener blocked — would hang Athena. Run in separate terminal.",
+    "nc -l":        "Listener blocked — would hang DroneCoil. Run in separate terminal.",
+    "ncat -l":      "Listener blocked — would hang DroneCoil. Run in separate terminal.",
     "vim ":         "Use: cat or sed for non-interactive file ops",
     "vi ":          "Use: cat or sed for non-interactive file ops",
     "nano ":        "Use: cat or sed for non-interactive file ops",
@@ -326,7 +326,7 @@ INTERACTIVE_BLOCKED = {
 # ═════════════════════════════════════════════════════════════════════
 # COMPREHENSIVE KALI TOOL REGISTRY
 #
-# Athena uses this both to (a) tell the AI what's available so it stops
+# DroneCoil uses this both to (a) tell the AI what's available so it stops
 # proposing tools that don't exist, and (b) auto-install missing tools
 # on demand.  Categorised for quick lookup by phase.
 # ═════════════════════════════════════════════════════════════════════
@@ -714,7 +714,7 @@ EXEC_DESTRUCTIVE        = "__DESTRUCTIVE_REFUSED__"
 
 
 # ═════════════════════════════════════════════════════════════════════
-# KNOWLEDGE BASE — extended from v6.1 with Athena-specific patterns
+# KNOWLEDGE BASE — extended from v6.1 with DroneCoil-specific patterns
 # ═════════════════════════════════════════════════════════════════════
 
 KB = {}
@@ -1125,7 +1125,7 @@ def get_kb_sections(workflow_key: Optional[str] = None,
 # ═════════════════════════════════════════════════════════════════════
 # AGENT SPECIFICATIONS
 #
-# Each agent is a specialist system-prompt fragment.  Athena's
+# Each agent is a specialist system-prompt fragment.  DroneCoil's
 # dispatcher picks one based on the current PTT node's phase.
 # Picking a specialist is NOT a separate LLM call — the dispatcher
 # is deterministic, so this is "multi-agent" in design without paying
@@ -1139,7 +1139,7 @@ AGENT_SPECS = {
         "icon": "♔",
         "color": "35",  # magenta
         "persona": (
-            "You are Athena's Strategist agent.  Your job is to read the "
+            "You are DroneCoil's Strategist agent.  Your job is to read the "
             "Pentesting Task Tree (PTT) and decide which child node to attack "
             "next, OR add a new child node when discovery reveals one.  You "
             "do NOT write commands.  You output a routing decision."
@@ -1160,7 +1160,7 @@ AGENT_SPECS = {
         "icon": "🔍",
         "color": "36",  # cyan
         "persona": (
-            "You are Athena's Reconnaissance specialist.  Network discovery, "
+            "You are DroneCoil's Reconnaissance specialist.  Network discovery, "
             "port scanning, service fingerprinting, OS detection.  Quiet first, "
             "loud second.  You think like the first 30 minutes of a real engagement."
         ),
@@ -1178,7 +1178,7 @@ AGENT_SPECS = {
         "icon": "🕸",
         "color": "33",  # yellow
         "persona": (
-            "You are Athena's Web Exploitation specialist.  HTTP/HTTPS surface "
+            "You are DroneCoil's Web Exploitation specialist.  HTTP/HTTPS surface "
             "only.  Tech ID → CVE → input testing → auth bypass → file/SSRF/SSTI."
         ),
         "extra_rules": (
@@ -1193,7 +1193,7 @@ AGENT_SPECS = {
         "icon": "🌐",
         "color": "34",  # blue
         "persona": (
-            "You are Athena's Network Exploitation specialist.  Non-web "
+            "You are DroneCoil's Network Exploitation specialist.  Non-web "
             "services: SSH, FTP, SMB, RDP, VPN, databases, RPC, mail.  "
             "Banner-grab → CVE-search → default creds → exploit → shell."
         ),
@@ -1209,7 +1209,7 @@ AGENT_SPECS = {
         "icon": "🏰",
         "color": "31",  # red
         "persona": (
-            "You are Athena's Active Directory specialist.  Domain attacks: "
+            "You are DroneCoil's Active Directory specialist.  Domain attacks: "
             "AS-REP roast, Kerberoast, NTLM relay, ACL abuse, ADCS, Zerologon, "
             "DCSync.  Lockout-aware spraying."
         ),
@@ -1226,7 +1226,7 @@ AGENT_SPECS = {
         "icon": "🐧",
         "color": "32",  # green
         "persona": (
-            "You are Athena's Linux post-exploitation and privesc specialist.  "
+            "You are DroneCoil's Linux post-exploitation and privesc specialist.  "
             "id/whoami/uname → sudo -l → SUID → cron → caps → docker/lxd → "
             "kernel CVE → cred hunt."
         ),
@@ -1241,7 +1241,7 @@ AGENT_SPECS = {
         "icon": "🪟",
         "color": "94",
         "persona": (
-            "You are Athena's Windows post-exploitation and privesc specialist.  "
+            "You are DroneCoil's Windows post-exploitation and privesc specialist.  "
             "whoami /priv/groups → systeminfo → service enum → token abuse → "
             "AlwaysInstallElevated → stored creds."
         ),
@@ -1257,7 +1257,7 @@ AGENT_SPECS = {
         "icon": "🔑",
         "color": "33",
         "persona": (
-            "You are Athena's Credential specialist.  Cracking, spraying, reuse, "
+            "You are DroneCoil's Credential specialist.  Cracking, spraying, reuse, "
             "hash conversion.  hashcat/john/hydra/nxc."
         ),
         "extra_rules": (
@@ -1272,7 +1272,7 @@ AGENT_SPECS = {
         "icon": "📤",
         "color": "95",
         "persona": (
-            "You are Athena's Data Exfiltration specialist.  Covert channels, "
+            "You are DroneCoil's Data Exfiltration specialist.  Covert channels, "
             "DLP bypass, archive + transfer."
         ),
         "extra_rules": (
@@ -1286,7 +1286,7 @@ AGENT_SPECS = {
         "icon": "🥷",
         "color": "90",
         "persona": (
-            "You are Athena's Evasion specialist.  AV/EDR/IDS/IPS bypass, "
+            "You are DroneCoil's Evasion specialist.  AV/EDR/IDS/IPS bypass, "
             "log cleaning, MAC spoof, fragmentation, decoys, AMSI bypass."
         ),
         "extra_rules": (
@@ -1300,7 +1300,7 @@ AGENT_SPECS = {
         "icon": "📋",
         "color": "97",
         "persona": (
-            "You are Athena's Reporter agent.  You consolidate findings, drop "
+            "You are DroneCoil's Reporter agent.  You consolidate findings, drop "
             "unverified noise, write clean prose."
         ),
         "extra_rules": (
@@ -2323,7 +2323,7 @@ def findings_card(new_count: int, items: List[str], width: int = BOX_W) -> str:
 def thinking_indicator(model_name: str = "") -> str:
     """v7.1 — single-line indicator shown while LLM is thinking."""
     suffix = f" \033[90m· {model_name}\033[0m" if model_name else ""
-    return f"\033[35m   ◆ ATHENA thinking…\033[0m{suffix}"
+    return f"\033[35m   ◆ DRONECOIL thinking…\033[0m{suffix}"
 
 
 def boot_sequence_lines() -> List[str]:
@@ -2351,7 +2351,7 @@ def boot_sequence_lines() -> List[str]:
 # at a glance.  Five voices:
 #
 #   PRIEST  — the operator (you).  Input prompts only.
-#   ATHENA  — the framework itself (target setup, reports, errors).
+#   DRONECOIL  — the framework itself (target setup, reports, errors).
 #   AGENT   — the LLM specialist's reasoning / decision.
 #   EXEC    — a command being proposed / executed.
 #   SYS     — system-level info (warnings, hints, dim notes).
@@ -2362,7 +2362,7 @@ def boot_sequence_lines() -> List[str]:
 
 # ANSI colour shorthands
 _C_PRIEST = "\033[35m"   # magenta — operator
-_C_ATHENA = "\033[96m"   # bright cyan — framework voice
+_C_DRONECOIL = "\033[96m"   # bright cyan — framework voice
 _C_AGENT  = "\033[33m"   # yellow — LLM agent
 _C_EXEC   = "\033[97m"   # bright white — commands
 _C_SYS    = "\033[90m"   # grey — system/dim notes
@@ -2374,10 +2374,10 @@ _C_BOLD   = "\033[1m"
 _C_DIM    = "\033[2m"
 
 
-def say_athena(message: str, *, indent: int = 3):
-    """Framework voice — Athena talking AS the system, not as an agent."""
+def say_dronecoil(message: str, *, indent: int = 3):
+    """Framework voice — DroneCoil talking AS the system, not as an agent."""
     pad = " " * indent
-    print(f"{pad}{_C_ATHENA}{_C_BOLD}◈ ATHENA{_C_RESET}{_C_ATHENA}  {message}{_C_RESET}")
+    print(f"{pad}{_C_DRONECOIL}{_C_BOLD}◈ DRONECOIL{_C_RESET}{_C_DRONECOIL}  {message}{_C_RESET}")
 
 
 def say_agent(message: str, agent_role: str = "agent", *, indent: int = 3):
@@ -2441,7 +2441,7 @@ def speakers_legend() -> str:
     return (
         f"   {_C_SYS}voices:{_C_RESET}  "
         f"{_C_PRIEST}{_C_BOLD}⚔ priest{_C_RESET} {_C_SYS}you{_C_RESET}  "
-        f"{_C_ATHENA}{_C_BOLD}◈ ATHENA{_C_RESET} {_C_SYS}framework{_C_RESET}  "
+        f"{_C_DRONECOIL}{_C_BOLD}◈ DRONECOIL{_C_RESET} {_C_SYS}framework{_C_RESET}  "
         f"{_C_AGENT}{_C_BOLD}🔍 RECON{_C_RESET} {_C_SYS}AI agent{_C_RESET}  "
         f"{_C_EXEC}▌{_C_RESET} {_C_SYS}command{_C_RESET}  "
         f"{_C_OK}✓{_C_RESET} {_C_SYS}ok{_C_RESET}  "
@@ -3080,7 +3080,7 @@ def tool_registry_for_prompt() -> str:
 # ═════════════════════════════════════════════════════════════════════
 # SCOPE / RoE ENFORCEMENT (v7.1)
 #
-# Scope is loaded from ~/.athena/scope.json (created on first run if
+# Scope is loaded from ~/.dronecoil/scope.json (created on first run if
 # missing).  Defines allowed CIDRs, allowed/blocked domains, and time
 # windows.  Out-of-scope commands are refused before they hit
 # subprocess.  Critical for legitimate engagements bound by SOWs.
@@ -3279,7 +3279,7 @@ class ScopeConfig:
 class AttackGraph:
     """Wrapper around networkx.DiGraph with offsec-specific semantics.
     Falls through to no-op stubs if networkx isn't installed so the
-    rest of Athena keeps working."""
+    rest of DroneCoil keeps working."""
 
     NODE_HOST    = "host"
     NODE_SVC     = "service"
@@ -3543,7 +3543,7 @@ class ContextManager:
 # WORKFLOWS — PTT seeders
 #
 # Each workflow now constructs an initial PTT for a given engagement
-# type, instead of just being a fixed prompt.  Athena's loop then
+# type, instead of just being a fixed prompt.  DroneCoil's loop then
 # walks the tree, dispatching the right specialist per phase.
 # ═════════════════════════════════════════════════════════════════════
 
@@ -3841,8 +3841,8 @@ WORKFLOWS = {
 # so the [THOUGHT] block carries explanations and roasts.  The GUI parses
 # [THOUGHT] panels directly so we never spend extra API calls on UI fluff.
 MENTOR_PERSONA = (
-    "── ATHENA — VOICE & TEACHING DUTY ──\n"
-    "You are Athena: ex-NSA, fifteen years red-team. You speak to The Priest\n"
+    "── DRONECOIL — VOICE & TEACHING DUTY ──\n"
+    "You are DroneCoil: ex-NSA, fifteen years red-team. You speak to The Priest\n"
     "like a senior to a junior: direct, blunt, zero hedging, no AI disclaimers.\n"
     "Dry humour and sharp edges welcome. Profanity if it fits.\n"
     "When the operator picks something loud/wrong: roast briefly like a coach.\n"
@@ -4083,11 +4083,11 @@ def build_system_prompt(agent_role: str,
 
     # v7.4 — Mentor / roast-teacher voice prepended to every system prompt.
     # Saves the GUI from having to make extra Groq calls for "explain this
-    # command" because Athena will already explain it in [THOUGHT].
+    # command" because DroneCoil will already explain it in [THOUGHT].
     mentor_block = MENTOR_PERSONA
 
     parts = [
-        f"You are Athena, an elite offensive AI assistant on Kali NetHunter.",
+        f"You are DroneCoil, an elite offensive AI assistant on Kali NetHunter.",
         f"Operator: The Priest.  Your LHOST: {lhost}",
         "",
         mentor_block,
@@ -4188,10 +4188,10 @@ def parse_specialist_response(text: str) -> Dict[str, Any]:
 
 
 # ═════════════════════════════════════════════════════════════════════
-# ATHENA SESSION
+# DRONECOIL SESSION
 # ═════════════════════════════════════════════════════════════════════
 
-class AthenaSession:
+class DroneCoilSession:
 
     def __init__(self):
         self.target_info: Dict[str, Any] = {}
@@ -4270,7 +4270,7 @@ class AthenaSession:
         try:
             self.logfile = open(log_path, "w")
             self.logfile.write(
-                f"ATHENA v{VERSION} LOG\n"
+                f"DRONECOIL v{VERSION} LOG\n"
                 f"Started: {self.session_start.isoformat()}\n"
                 f"{'='*64}\n\n"
             )
@@ -4299,7 +4299,7 @@ class AthenaSession:
             pass
 
         print()
-        say_athena("Boot check…")
+        say_dronecoil("Boot check…")
 
         # Pull upgradable list (best-effort; non-fatal if apt unavailable)
         try:
@@ -4410,7 +4410,7 @@ class AthenaSession:
 
     def set_target(self):
         print()
-        say_athena("Set target. Enter to skip any field.")
+        say_dronecoil("Set target. Enter to skip any field.")
         print()
         try:
             ip     = input("   IP / CIDR range : ").strip()
@@ -4605,7 +4605,7 @@ class AthenaSession:
             return False
         if not pw:
             self._sudo_skip_session = True
-            say_dim("Skipped — Athena will avoid sudo for this session.")
+            say_dim("Skipped — DroneCoil will avoid sudo for this session.")
             return False
 
         # Validate by running `sudo -S -v` with the password piped in
@@ -4666,7 +4666,7 @@ class AthenaSession:
             print()
             print(error_alert(
                 "DESTRUCTIVE COMMAND REFUSED", cmd,
-                hint="Athena will not run anything that wipes data, "
+                hint="DroneCoil will not run anything that wipes data, "
                      "kills the system, or creates fork bombs."))
             self._log(f"[DESTRUCTIVE REFUSED] {cmd}")
             return EXEC_DESTRUCTIVE
@@ -4680,7 +4680,7 @@ class AthenaSession:
             print(error_alert(
                 "OUT OF SCOPE — REFUSED",
                 f"{cmd}\n\nReason: {scope_reason}",
-                hint=f"Edit ~/.athena/scope.json to adjust engagement scope."))
+                hint=f"Edit ~/.dronecoil/scope.json to adjust engagement scope."))
             self._log(f"[OUT-OF-SCOPE] {cmd} -- {scope_reason}")
             return EXEC_REJECTED
 
@@ -4840,7 +4840,7 @@ class AthenaSession:
             else:
                 proc.wait()
         except KeyboardInterrupt:
-            print("\n\033[33m   Command aborted by user — returning to Athena\033[0m")
+            print("\n\033[33m   Command aborted by user — returning to DroneCoil\033[0m")
             if proc:
                 try:
                     os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
@@ -4978,7 +4978,7 @@ class AthenaSession:
         result = self.run_command(verify_cmd, label="VERIFY")
         if result == EXEC_SESSION_EXIT:
             # Propagate session exit — was silently dropped before (always-False bug)
-            say_athena("Session ended during verification.")
+            say_dronecoil("Session ended during verification.")
             self._generate_report()
             if self.logfile:
                 self.logfile.close()
@@ -5283,7 +5283,7 @@ class AthenaSession:
 
     def _handle_stuck(self):
         """When stuck — ask AI for 3 alternative approaches."""
-        print("\n\033[33m   ⚠  Athena is stuck.  Asking AI for 3 alternatives...\033[0m")
+        print("\n\033[33m   ⚠  DroneCoil is stuck.  Asking AI for 3 alternatives...\033[0m")
 
         active = self.ptt.find_in_progress() or self.ptt.find_next_pending()
         node_desc = (f"Current node: [{active.nid}] {active.title} "
@@ -5308,7 +5308,7 @@ class AthenaSession:
 
         response = self._think_with_fallback([
             {"role": "system",
-             "content": "You are Athena, listing pivot options when stuck."},
+             "content": "You are DroneCoil, listing pivot options when stuck."},
             {"role": "user", "content": prompt},
         ])
         if not response:
@@ -5318,7 +5318,7 @@ class AthenaSession:
         m = re.search(r'\[OPTIONS\](.*?)\[/?OPTIONS\]', response, re.DOTALL)
         opts_text = m.group(1).strip() if m else response
 
-        print(f"\n\033[35m   ATHENA — 3 ALTERNATIVES:\033[0m\n")
+        print(f"\n\033[35m   DRONECOIL — 3 ALTERNATIVES:\033[0m\n")
         print(f"\033[97m{opts_text}\033[0m\n")
 
         try:
@@ -5548,7 +5548,7 @@ class AthenaSession:
 
             if output == EXEC_SESSION_EXIT:
                 print()
-                say_athena("Session ended by The Priest.")
+                say_dronecoil("Session ended by The Priest.")
                 self._generate_report()
                 if self.logfile:
                     self.logfile.close()
@@ -5585,7 +5585,7 @@ class AthenaSession:
 
                 try:
                     print()
-                    say_athena("Alternative approach?", indent=3)
+                    say_dronecoil("Alternative approach?", indent=3)
                     raw = input(f"   {kbd('y')} yes   {kbd('n')} no  › ")
                 except (EOFError, KeyboardInterrupt):
                     break
@@ -5674,7 +5674,7 @@ class AthenaSession:
             return
 
         print()
-        say_athena(f"Workflow: {wf['name']}")
+        say_dronecoil(f"Workflow: {wf['name']}")
         print()
         self._log(f"[WORKFLOW] {wf['name']}")
         self._seed_ptt_from_workflow(key, target)
@@ -5891,7 +5891,7 @@ class AthenaSession:
                   self.target_info.get("domain") or "Unknown")
 
         sys_prompt = (
-            "You are Athena's Reporter agent.  You write professional "
+            "You are DroneCoil's Reporter agent.  You write professional "
             "penetration test reports.  Be concise, factual.  Use "
             "Markdown headers.  Include CVSS rating where applicable.  "
             "Never invent findings — only use what is provided.  "
@@ -5963,7 +5963,7 @@ class AthenaSession:
 
         try:
             with open(rpath, "w") as f:
-                f.write(f"# ATHENA v{VERSION} REPORT\n\n")
+                f.write(f"# DRONECOIL v{VERSION} REPORT\n\n")
                 f.write(f"- **Target:** {target or 'Not set'}\n")
                 f.write(f"- **Mission:** {self.target_info.get('notes') or '—'}\n")
                 f.write(f"- **Operator:** The Priest\n")
@@ -5991,7 +5991,7 @@ class AthenaSession:
                     f.write(f"- [{mark}] **{fnd.ftype}** = `{fnd.value}` "
                             f"(node {fnd.node_id}, ts {fnd.timestamp}){attack}\n")
                     f.write(f"  - source: `{fnd.source_cmd[:200]}`\n")
-                f.write(f"\n---\n*Generated by Athena v{VERSION}*\n")
+                f.write(f"\n---\n*Generated by DroneCoil v{VERSION}*\n")
             print(f"\n\033[32m   ✓ Report: {rpath}\033[0m")
         except Exception as e:
             print(f"\033[33m   Report failed: {e}\033[0m")
@@ -6043,7 +6043,7 @@ class AthenaSession:
         path = os.path.join(LOG_DIR, f"save_{ts}.txt")
         try:
             with open(path, "w") as f:
-                f.write(f"ATHENA SAVE {ts}\n{'='*60}\n\n")
+                f.write(f"DRONECOIL SAVE {ts}\n{'='*60}\n\n")
                 for msg in self.history:
                     f.write(f"[{msg['role'].upper()}]\n{msg['content']}\n\n")
             print(f"\033[32m   Saved: {path}\033[0m")
@@ -6193,7 +6193,7 @@ class AthenaSession:
 
     def show_help(self):
         print(
-            f"\n   \033[35m\033[1mATHENA v{VERSION}\033[0m"
+            f"\n   \033[35m\033[1mDRONECOIL v{VERSION}\033[0m"
             f"   \033[90mby The Priest\033[0m\n"
             f"   Model      : \033[97m{self._current_model_name()}\033[0m\n"
             f"   LHOST      : \033[97m{self.lhost}\033[0m\n"
@@ -6270,7 +6270,7 @@ class AthenaSession:
                                     "\033[35m›\033[0m ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
-                say_athena("Session ended.")
+                say_dronecoil("Session ended.")
                 self._generate_report()
                 if self.logfile:
                     self.logfile.close()
@@ -6285,7 +6285,7 @@ class AthenaSession:
 
             if cmd in ("exit", "quit", "q"):
                 print()
-                say_athena("Generating report...")
+                say_dronecoil("Generating report...")
                 self._generate_report()
                 if self.logfile:
                     self.logfile.close()
@@ -6341,7 +6341,7 @@ class AthenaSession:
                 self.history.clear()
                 self.command_history.clear()
                 self.current_workflow_key = None
-                say_athena("AI memory cleared.  PTT and findings preserved.")
+                say_dronecoil("AI memory cleared.  PTT and findings preserved.")
             elif cmd == "reset":
                 self.history.clear()
                 self.command_history.clear()
@@ -6363,7 +6363,7 @@ class AthenaSession:
                 self._pending_dispatch_error = None
                 self._pending_dispatch_error_to_prompt = None
                 self._no_cmd_retries = 0
-                say_athena("Full reset.  Fresh PTT, graph, sudo cache wiped, "
+                say_dronecoil("Full reset.  Fresh PTT, graph, sudo cache wiped, "
                            "no findings, no history.")
             elif cmd == "scope":
                 self.show_scope()
@@ -6433,7 +6433,7 @@ BANNER = _build_banner()
 
 if __name__ == "__main__":
     try:
-        session = AthenaSession()
+        session = DroneCoilSession()
         session.repl()
     except KeyboardInterrupt:
         print("\n\033[90mInterrupted.\033[0m")

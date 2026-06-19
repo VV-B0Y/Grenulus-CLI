@@ -1,4 +1,4 @@
-# Athena Quick Reference
+# DroneCoil Quick Reference
 
 > Fast lookup tables for all agents, workflows, tools, REPL commands, and output tags.
 
@@ -91,7 +91,7 @@ These are the tools the LLM can invoke with `[TOOL]name[/TOOL][ARGS]{...}[/ARGS]
 
 ## LLM Output Tags
 
-The LLM must emit its response using these XML-style tags. Athena's parser (`parse_specialist_response()`) extracts them:
+The LLM must emit its response using these XML-style tags. DroneCoil's parser (`parse_specialist_response()`) extracts them:
 
 | Tag | Required | Purpose |
 |---|---|---|
@@ -165,12 +165,12 @@ The LLM must emit its response using these XML-style tags. Athena's parser (`par
 
 | Path | Description |
 |---|---|
-| `athena.py` | Main engine (agents, tools, workflows, prompts, session logic) |
-| `athena_gui.py` | GTK4 GUI shell |
-| `~/.athena/scope.json` | Engagement scope / RoE (edit between sessions) |
-| `~/.athena/logs/session_*.txt` | Per-session logs (ANSI stripped) |
-| `~/.athena/` | Runtime data root |
-| `/tmp/athena_session.lock` | Boot-check cache (6h TTL, delete to force re-check) |
+| `dronecoil.py` | Main engine (agents, tools, workflows, prompts, session logic) |
+| `dronecoil_gui.py` | GTK4 GUI shell |
+| `~/.dronecoil/scope.json` | Engagement scope / RoE (edit between sessions) |
+| `~/.dronecoil/logs/session_*.txt` | Per-session logs (ANSI stripped) |
+| `~/.dronecoil/` | Runtime data root |
+| `/tmp/dronecoil_session.lock` | Boot-check cache (6h TTL, delete to force re-check) |
 
 ---
 

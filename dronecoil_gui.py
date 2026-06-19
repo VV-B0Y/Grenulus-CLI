@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # ╔══════════════════════════════════════════════════════════════════╗
-# ║          ATHENA GUI — Native pentest assistant · v7.4            ║
+# ║          DRONECOIL GUI — Native pentest assistant · v7.4            ║
 # ║                                                                  ║
-# ║   ZERO extra Groq calls — Athena's THOUGHT panels do the         ║
+# ║   ZERO extra Groq calls — DroneCoil's THOUGHT panels do the         ║
 # ║   teaching now (mentor persona injected into her system prompt). ║
 # ║                                                                  ║
 # ║   · Engagement wizard (target + goal in one form)                ║
-# ║   · Renders athena's [MANUAL] playbook panels as cards           ║
-# ║   · "I'm stuck" button just types 'stuck' to athena              ║
-# ║   · Persistent config + Groq key (~/.athena/config.json)         ║
+# ║   · Renders dronecoil's [MANUAL] playbook panels as cards           ║
+# ║   · "I'm stuck" button just types 'stuck' to dronecoil              ║
+# ║   · Persistent config + Groq key (~/.dronecoil/config.json)         ║
 # ║   · No idle/disabled input — always allow typing                 ║
 # ║   · libadwaita 1.6+ compatible dialogs with fallbacks            ║
 # ╚══════════════════════════════════════════════════════════════════╝
@@ -40,24 +40,24 @@ from gi.repository import Adw, Gdk, Gio, GLib, GObject, Gtk, Pango  # noqa: E402
 # CONSTANTS
 # ═════════════════════════════════════════════════════════════════════
 
-APP_ID = "io.thepriest.Athena"
+APP_ID = "io.thepriest.DroneCoil"
 VERSION = "7.4"
 
-ATHENA_HOME = os.path.expanduser("~/.athena")
-LOG_DIR = os.path.join(ATHENA_HOME, "logs")
-CONFIG_PATH = os.path.join(ATHENA_HOME, "config.json")
+DRONECOIL_HOME = os.path.expanduser("~/.dronecoil")
+LOG_DIR = os.path.join(DRONECOIL_HOME, "logs")
+CONFIG_PATH = os.path.join(DRONECOIL_HOME, "config.json")
 
 SCRIPT_CANDIDATES = [
-    os.environ.get("ATHENA_SCRIPT", ""),
-    "/opt/athena5/athena.py",
-    os.path.expanduser("~/.local/share/athena5/athena.py"),
-    os.path.expanduser("~/Documents/athena5/athena.py"),
-    os.path.expanduser("~/athena5/athena.py"),
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "athena.py"),
+    os.environ.get("DRONECOIL_SCRIPT", ""),
+    "/opt/dronecoil/dronecoil.py",
+    os.path.expanduser("~/.local/share/dronecoil/dronecoil.py"),
+    os.path.expanduser("~/Documents/dronecoil/dronecoil.py"),
+    os.path.expanduser("~/dronecoil/dronecoil.py"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "dronecoil.py"),
 ]
 
 
-def find_athena_script() -> Optional[str]:
+def find_dronecoil_script() -> Optional[str]:
     for c in SCRIPT_CANDIDATES:
         if c and os.path.isfile(c):
             return c
@@ -76,7 +76,7 @@ class Config:
 
     @classmethod
     def load(cls) -> Dict[str, Any]:
-        os.makedirs(ATHENA_HOME, exist_ok=True)
+        os.makedirs(DRONECOIL_HOME, exist_ok=True)
         data = dict(cls.DEFAULTS)
         try:
             with open(CONFIG_PATH) as f:
@@ -87,7 +87,7 @@ class Config:
 
     @classmethod
     def save(cls, data: Dict[str, Any]) -> None:
-        os.makedirs(ATHENA_HOME, exist_ok=True)
+        os.makedirs(DRONECOIL_HOME, exist_ok=True)
         try:
             tmp = CONFIG_PATH + ".tmp"
             with open(tmp, "w") as f:
@@ -225,7 +225,7 @@ headerbar {
 .error { background: #1a0a0e; border-color: #5a2a2a; }
 .error .card-title { color: #ff7788; }
 
-/* manual playbook (from Athena's [MANUAL] tag) */
+/* manual playbook (from DroneCoil's [MANUAL] tag) */
 .manual {
     background: #1a1408; border-color: #6a5020;
 }
@@ -259,7 +259,7 @@ headerbar {
 .plain { background: transparent; border: none; padding: 4px 12px; }
 .plain .card-body { color: #b8a8c8; font-family: monospace; font-size: 12px; }
 
-.athena-sidebar { background: #0e0a18; }
+.dronecoil-sidebar { background: #0e0a18; }
 .sidebar-header {
     color: #6a5a7a; font-size: 10px; font-weight: 700;
     letter-spacing: 1.5px; margin: 14px 16px 4px;
@@ -456,10 +456,10 @@ class PanelParser:
 
 
 # ═════════════════════════════════════════════════════════════════════
-# ATHENA SUBPROCESS
+# DRONECOIL SUBPROCESS
 # ═════════════════════════════════════════════════════════════════════
 
-class AthenaProcess(GObject.Object):
+class DroneCoilProcess(GObject.Object):
     __gsignals__ = {
         "event":  (GObject.SignalFlags.RUN_FIRST, None, (object,)),
         "exited": (GObject.SignalFlags.RUN_FIRST, None, ()),
@@ -545,7 +545,7 @@ class AthenaProcess(GObject.Object):
 
     def writeln(self, text: str = "") -> None:
         # Newlines INSIDE the text would split the input into multiple
-        # responses to athena's prompts — collapse them to spaces.
+        # responses to dronecoil's prompts — collapse them to spaces.
         clean = text.replace("\n", " ").replace("\r", " ")
         self.write(clean + "\n")
 
@@ -624,7 +624,7 @@ class WelcomeCard(Gtk.Box):
 class ThoughtCard(Gtk.Box):
     def __init__(self, body: str):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-        card = _card("🧠 Athena thinking", "thought")
+        card = _card("🧠 DroneCoil thinking", "thought")
         card.append(_body_label(body))
         self.append(card)
 
@@ -749,7 +749,7 @@ class ResultCard(Gtk.Box):
         out.set_selectable(True)
         card.append(out)
         if truncated:
-            hint = Gtk.Label(label="(full output in ~/.athena/logs)", xalign=0)
+            hint = Gtk.Label(label="(full output in ~/.dronecoil/logs)", xalign=0)
             hint.add_css_class("input-hint")
             card.append(hint)
         self.append(card)
@@ -778,7 +778,7 @@ class ErrorCard(Gtk.Box):
 
 
 class ManualPlaybookCard(Gtk.Box):
-    """Renders Athena's [MANUAL] panel body as numbered cards.  Zero Groq
+    """Renders DroneCoil's [MANUAL] panel body as numbered cards.  Zero Groq
     cost — the steps already came from her response."""
 
     def __init__(self, body: str):
@@ -992,7 +992,7 @@ class InputBar(Gtk.Box):
         self._on_rescue = on_rescue
         self.add_css_class("input-bar")
 
-        self._hint = Gtk.Label(label="Tell Athena what you want…", xalign=0)
+        self._hint = Gtk.Label(label="Tell DroneCoil what you want…", xalign=0)
         self._hint.add_css_class("input-hint")
         self.append(self._hint)
 
@@ -1013,7 +1013,7 @@ class InputBar(Gtk.Box):
         rescue_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         rescue_row.add_css_class("rescue-row")
         rescue_row.set_halign(Gtk.Align.START)
-        rescue_btn = Gtk.Button(label="🛟 I'm stuck — ask Athena for manual steps")
+        rescue_btn = Gtk.Button(label="🛟 I'm stuck — ask DroneCoil for manual steps")
         rescue_btn.add_css_class("rescue-btn")
         rescue_btn.connect("clicked", lambda _b: self._on_rescue())
         rescue_row.append(rescue_btn)
@@ -1033,7 +1033,7 @@ class InputBar(Gtk.Box):
             self._entry.set_visibility(True)
             self._entry.set_placeholder_text("or type free text…")
         else:
-            self._hint.set_label("Tell Athena what you want…")
+            self._hint.set_label("Tell DroneCoil what you want…")
             self._entry.set_visibility(True)
             self._entry.set_placeholder_text("type here, or use buttons above…")
         self._entry.set_sensitive(True)
@@ -1052,7 +1052,7 @@ class InputBar(Gtk.Box):
 
 class EngagementWizard:
     """Single-form: target IP, domain, notes, goal.  Sends them as
-    sequential inputs to athena.py's startup prompts."""
+    sequential inputs to dronecoil.py's startup prompts."""
 
     def __init__(self, parent: Gtk.Window,
                  on_done: Callable[[Dict[str, str]], None],
@@ -1079,7 +1079,7 @@ class EngagementWizard:
         self._dom.set_placeholder_text("example.com  or  https://app.target.tld")
         self._notes.set_placeholder_text("HTB box · CTF · client X · …")
         self._goal.set_placeholder_text(
-            "what do you want Athena to do with this target?")
+            "what do you want DroneCoil to do with this target?")
 
         self._build_and_present()
 
@@ -1088,7 +1088,7 @@ class EngagementWizard:
         body.set_size_request(360, -1)
 
         sub = Gtk.Label(
-            label="Set the target and your objective.  Athena plans from there.",
+            label="Set the target and your objective.  DroneCoil plans from there.",
             xalign=0)
         sub.set_wrap(True); sub.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         sub.add_css_class("wizard-sub")
@@ -1131,7 +1131,7 @@ class EngagementWizard:
         if response != "start":
             self._on_cancel()
             return
-        # Strip newlines from goal so it doesn't break athena's input pipe
+        # Strip newlines from goal so it doesn't break dronecoil's input pipe
         goal = self._goal.get_text().strip().replace("\n", " ").replace("\r", " ")
         values = {
             "ip":     self._ip.get_text().strip(),
@@ -1147,10 +1147,10 @@ class EngagementWizard:
 # MAIN WINDOW
 # ═════════════════════════════════════════════════════════════════════
 
-class AthenaWindow(Adw.ApplicationWindow):
+class DroneCoilWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.set_title("Athena")
+        self.set_title("DroneCoil")
         self.set_default_size(420, 820)
 
         cfg = Config.load()
@@ -1158,7 +1158,7 @@ class AthenaWindow(Adw.ApplicationWindow):
         if key and not os.environ.get("GROQ_API_KEY"):
             os.environ["GROQ_API_KEY"] = key
 
-        self._process: Optional[AthenaProcess] = None
+        self._process: Optional[DroneCoilProcess] = None
         self._pending_inputs: List[str] = []
         self._wizard_open = False
         self._target_pill: Optional[Gtk.Label] = None
@@ -1209,7 +1209,7 @@ class AthenaWindow(Adw.ApplicationWindow):
 
     def _on_wizard_done(self, values: Dict[str, str]) -> None:
         self._wizard_open = False
-        # athena.py asks for: IP, Domain, Notes (set_target), then the
+        # dronecoil.py asks for: IP, Domain, Notes (set_target), then the
         # priest prompt accepts free text.  Queue all four in order.
         self._pending_inputs = [
             values.get("ip", ""),
@@ -1220,32 +1220,32 @@ class AthenaWindow(Adw.ApplicationWindow):
         self._conversation.clear()
         tag = values.get("ip") or values.get("domain") or "?"
         self._conversation.append(PlainCard(f"── New Engagement ──  target: {tag}"))
-        self._start_athena()
+        self._start_dronecoil()
 
     def _on_wizard_cancel(self) -> None:
         self._wizard_open = False
 
-    def _start_athena(self) -> bool:
+    def _start_dronecoil(self) -> bool:
         if self._process is not None:
             return False
-        script = find_athena_script()
+        script = find_dronecoil_script()
         if not script:
             self._conversation.append(ErrorCard(
-                "athena.py not found",
-                "Reinstall via install.sh or set ATHENA_SCRIPT.\n\nSearched:\n"
+                "dronecoil.py not found",
+                "Reinstall via install.sh or set DRONECOIL_SCRIPT.\n\nSearched:\n"
                 + "\n".join(f"  · {c}" for c in SCRIPT_CANDIDATES if c)))
             return False
 
-        self._process = AthenaProcess(script)
+        self._process = DroneCoilProcess(script)
         self._process.connect("event", self._on_process_event)
         self._process.connect("exited", self._on_process_exited)
         if not self._process.start():
             self._conversation.append(ErrorCard(
                 "Failed to spawn",
-                "Could not start athena.py. Check ~/.athena/logs."))
+                "Could not start dronecoil.py. Check ~/.dronecoil/logs."))
         return False
 
-    def _restart_athena(self) -> None:
+    def _restart_dronecoil(self) -> None:
         if self._process:
             self._process.stop()
             self._process = None
@@ -1282,7 +1282,7 @@ class AthenaWindow(Adw.ApplicationWindow):
     def _on_send_text(self, text: str) -> None:
         if self._process is None:
             self._pending_inputs.append(text)
-            self._start_athena()
+            self._start_dronecoil()
             return
         self._process.writeln(text)
 
@@ -1292,7 +1292,7 @@ class AthenaWindow(Adw.ApplicationWindow):
         self._process.writeln(value)
 
     def _on_rescue(self) -> None:
-        """Stuck button: just tell Athena. Her mentor persona handles it
+        """Stuck button: just tell DroneCoil. Her mentor persona handles it
         by emitting a [MANUAL] block instead of a [CMD]."""
         if self._process is None:
             return
@@ -1305,7 +1305,7 @@ class AthenaWindow(Adw.ApplicationWindow):
     def _build_header(self) -> Adw.HeaderBar:
         header = Adw.HeaderBar()
         title_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        t1 = Gtk.Label(label="ATHENA"); t1.add_css_class("title")
+        t1 = Gtk.Label(label="DRONECOIL"); t1.add_css_class("title")
         title_box.append(t1)
         pills = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         pills.set_halign(Gtk.Align.CENTER)
@@ -1348,7 +1348,7 @@ class AthenaWindow(Adw.ApplicationWindow):
         page = Adw.NavigationPage()
         page.set_title("Commands")
         scroll = Gtk.ScrolledWindow()
-        scroll.add_css_class("athena-sidebar")
+        scroll.add_css_class("dronecoil-sidebar")
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -1424,7 +1424,7 @@ class AthenaWindow(Adw.ApplicationWindow):
             self.add_action(act)
 
     def _action_restart(self, *_):
-        self._restart_athena()
+        self._restart_dronecoil()
 
     def _action_new_engagement(self, *_):
         if self._process:
@@ -1448,25 +1448,25 @@ class AthenaWindow(Adw.ApplicationWindow):
     def _action_about(self, *_):
         if hasattr(Adw, "AboutDialog"):
             a = Adw.AboutDialog()
-            a.set_application_name("Athena")
+            a.set_application_name("DroneCoil")
             a.set_application_icon(APP_ID)
             a.set_developer_name("The Priest")
             a.set_version(VERSION)
             a.set_comments("AI-driven offensive security agent.\n"
                            "Native GTK4 pentest assistant.")
-            a.set_website("https://github.com/the-priest/athena5")
+            a.set_website("https://github.com/the-priest/dronecoil")
             a.set_license_type(Gtk.License.MIT_X11)
             a.present(self)
         else:
             a = Adw.AboutWindow(
                 transient_for=self,
-                application_name="Athena",
+                application_name="DroneCoil",
                 application_icon=APP_ID,
                 developer_name="The Priest",
                 version=VERSION,
                 comments="AI-driven offensive security agent.\n"
                          "Native GTK4 pentest assistant.",
-                website="https://github.com/the-priest/athena5",
+                website="https://github.com/the-priest/dronecoil",
                 license_type=Gtk.License.MIT_X11,
             )
             a.present()
@@ -1483,7 +1483,7 @@ class AthenaWindow(Adw.ApplicationWindow):
         wrap.set_size_request(340, -1)
         info = Gtk.Label(
             label="Get a free key at console.groq.com.  Saved to "
-                  "~/.athena/config.json (chmod 600).",
+                  "~/.dronecoil/config.json (chmod 600).",
             xalign=0)
         info.set_wrap(True); info.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
         info.add_css_class("wizard-sub")
@@ -1544,7 +1544,7 @@ class AthenaWindow(Adw.ApplicationWindow):
 # APP
 # ═════════════════════════════════════════════════════════════════════
 
-class AthenaApp(Adw.Application):
+class DroneCoilApp(Adw.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID,
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
@@ -1554,12 +1554,12 @@ class AthenaApp(Adw.Application):
         load_css()
         win = self.props.active_window
         if not win:
-            win = AthenaWindow(application=self)
+            win = DroneCoilWindow(application=self)
         win.present()
 
 
 def main() -> int:
-    return AthenaApp().run(sys.argv)
+    return DroneCoilApp().run(sys.argv)
 
 
 if __name__ == "__main__":
