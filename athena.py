@@ -5724,7 +5724,7 @@ class AthenaSession:
             print("\033[90m           credential, exfil, evasion, report\033[0m\n")
             seed: List[Tuple[str, str]] = []
             while True:
-                raw = input(f"\033[90m   task {len(seed)+1}: \033[0m").strip()
+                raw = input(f"\033[90m   task {len(seed) + 1}: \033[0m").strip()
                 if not raw:
                     break
                 if "|" not in raw:

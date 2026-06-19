@@ -24,7 +24,7 @@
 
 ## 1. What This Project Is
 
-Athena is a **single-file AI pentesting copilot** (`athena.py`, ~6 300 lines). It wraps a free-tier Groq LLM around a structured pentesting engine. The operator types a target and an objective; Athena:
+Athena is a **single-file AI pentesting copilot** (`athena.py`, ~6,300 lines). It wraps a free-tier Groq LLM around a structured pentesting engine. The operator types a target and an objective; Athena:
 
 1. Seeds a **Pentesting Task Tree (PTT)** — a rooted task tree representing the full engagement.
 2. Selects a **specialist agent** for each PTT node (recon, web, AD, privesc, etc.).
@@ -41,8 +41,8 @@ Athena is a **single-file AI pentesting copilot** (`athena.py`, ~6 300 lines). I
 
 ```
 Grenulus-CLI/
-├── athena.py          ← THE ENGINE  (~6 300 lines, single source of truth)
-├── athena_gui.py      ← GTK4 GUI shell (~1 566 lines)
+├── athena.py          ← THE ENGINE  (~6,300 lines, single source of truth)
+├── athena_gui.py      ← GTK4 GUI shell (~1,566 lines)
 ├── athena-gui         ← Bash launcher for the GUI
 ├── bootstrap.sh       ← Remote one-shot installer
 ├── install.sh         ← Local installer (symlinks, deps, desktop entry)
