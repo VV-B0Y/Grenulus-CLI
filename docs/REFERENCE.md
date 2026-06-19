@@ -112,6 +112,9 @@ The LLM must emit its response using these XML-style tags. Athena's parser (`par
 | Command | Action |
 |---|---|
 | `workflow` | Open the 23-workflow menu |
+| `workflow list` | Show all workflows with keys and descriptions |
+| `workflow add` | Interactively add a new workflow (session-only) |
+| `workflow edit <key>` | Edit name/description of an existing workflow |
 | `target` | Set or update the engagement target |
 | `findings` | Show all extracted findings (verified + unverified) |
 | `tree` | Render the Pentesting Task Tree |
@@ -120,7 +123,11 @@ The LLM must emit its response using these XML-style tags. Athena's parser (`par
 | `mitre` | MITRE ATT&CK techniques used this session |
 | `tools` | Tool availability check + auto-install missing |
 | `model` | Show Groq provider chain status |
+| `model list` | Alias for `model` |
+| `model set <n>` | Force-set active model to position n (1-indexed) |
 | `agent` | List all specialist agents |
+| `agent edit <key>` | Edit persona/extra_rules of an agent (session-only) |
+| `prompt show` | Preview the system prompt for the next LLM call |
 | `dashboard` | Concise session status panel |
 | `save` | Save conversation to file |
 | `report` | Generate the engagement report now |
